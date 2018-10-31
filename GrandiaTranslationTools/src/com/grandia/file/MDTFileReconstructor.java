@@ -30,8 +30,12 @@ public class MDTFileReconstructor {
     private static final int SCRIPT_HEADER_OFFSET = 88;
     //The value at offset 0x20 seems to be a common HWRAM location on the Saturn, and shouldn't be modified.
     private static final int OFFSET_0X20 = 32;
+    // The values at offset 0x180 and 0x1F4 represent the size of the data in CD Sectors and will need to be updated.
+    private static final int SECTOR_SIZE_OFFSET_A = 384;
+    private static final int SECTOR_SIZE_OFFSET_B = 496;
     //The last two entries do not actually follow the usual pattern of offset/size. It's instead 2 different offsets.
     private static final int LAST_OFFSET = 504;
+    private static final int SECTOR_SIZE = 2048;
     private static final Logger log = Logger.getLogger(MDTFileParser.class.getName());
     private PointerTable pointerTable = new PointerTable();;
     private String inputFilePath;
@@ -87,8 +91,11 @@ public class MDTFileReconstructor {
             Map<String, File> scriptFiles = new HashMap<>();
             FileUtils.populateFileMap(scriptFiles, inputFilePath, ".SCRIPT");
             
-            Map<String, File> postScriptFiles = new HashMap<>();
-            FileUtils.populateFileMap(postScriptFiles, inputFilePath, ".POSTSCRIPT");
+            Map<String, File> graphicsFiles = new HashMap<>();
+            FileUtils.populateFileMap(graphicsFiles, inputFilePath, ".GRAPHICS");
+            
+            Map<String, File> footerFiles = new HashMap<>();
+            FileUtils.populateFileMap(footerFiles, inputFilePath, ".FOOTER");
             
             //For each file, we get it's remaining parts, calculate the new pointer table, and put it back together.
             for(String key : headerFiles.keySet()) {
@@ -101,6 +108,12 @@ public class MDTFileReconstructor {
                     PointerTableEntry scriptHeaderEntry = pointerTable.getPointerTableEntry(SCRIPT_HEADER_OFFSET);
                     PointerTableEntry scriptEntry = pointerTable.getPointerTableEntry(SCRIPT_OFFSET);
                     //printPointerTable();
+                    
+                    //Read the rest of the file pieces in.
+                    byte[] preScriptBytes = Files.readAllBytes(preScriptFiles.get(key).toPath());
+                    byte[] scriptHeaderBytes = Files.readAllBytes(scriptHeaderFiles.get(key).toPath());
+                    byte[] graphicsBytes = Files.readAllBytes(graphicsFiles.get(key).toPath());
+                    byte[] footerBytes = Files.readAllBytes(footerFiles.get(key).toPath());
                     
                     //Determine the new script size.
                     byte[] scriptBytes = Files.readAllBytes(scriptFiles.get(key).toPath());
@@ -117,6 +130,18 @@ public class MDTFileReconstructor {
                         newScript.put(scriptBytes);
                         scriptBytes = newScript.array();
                     }
+                    
+                    //The data must end on a value divisible by 2048 so it fits cleanly into CD Sectors.
+                    int finalDataSize = headerBytes.length + preScriptBytes.length + scriptHeaderBytes.length + scriptBytes.length + graphicsBytes.length;
+                    //Find out how far away we are from the end of the next sector.
+                    int sectorRemainder = finalDataSize % SECTOR_SIZE;
+                    int distanceToNearestsector = SECTOR_SIZE - sectorRemainder;
+                   
+                    //Round our data size up to the nearest sector.
+                    finalDataSize += distanceToNearestsector;
+                    
+                    //Finally determine how many sectors our data takes.
+                    int finalSectorSize = finalDataSize / SECTOR_SIZE;
                     
                     //Calculate the new pointer table entries.
                     ByteBuffer bb = ByteBuffer.allocate(4);
@@ -142,7 +167,21 @@ public class MDTFileReconstructor {
                             out.write(bb.array());
                             bb.putInt(0, pte.getSize());
                             out.write(bb.array());
-                            
+                        // We need to update both Sector Size offsets correctly.
+                        }else if(i == SECTOR_SIZE_OFFSET_A) {
+                            PointerTableEntry pte = pointerTable.getPointerTableEntry(i);
+                            pte.setOffset(finalSectorSize);
+                            bb.putInt(0, pte.getOffset());
+                            out.write(bb.array());
+                            bb.putInt(0, pte.getSize());
+                            out.write(bb.array());
+                        }else if(i == SECTOR_SIZE_OFFSET_B) {
+                            PointerTableEntry pte = pointerTable.getPointerTableEntry(i);
+                            pte.setSize(finalSectorSize);
+                            bb.putInt(0, pte.getOffset());
+                            out.write(bb.array());
+                            bb.putInt(0, pte.getSize());
+                            out.write(bb.array());
                         //If last offset, treat as 2 different offsets rather than offset/size.    
                         }else if (i == LAST_OFFSET) {
                             PointerTableEntry pte = pointerTable.getPointerTableEntry(i);
@@ -172,16 +211,22 @@ public class MDTFileReconstructor {
                         
                     }
                     
-                    //Read the rest of the file pieces in.
-                    byte[] preScriptBytes = Files.readAllBytes(preScriptFiles.get(key).toPath());
-                    byte[] scriptHeaderBytes = Files.readAllBytes(scriptHeaderFiles.get(key).toPath());
-                    byte[] postScriptBytes = Files.readAllBytes(postScriptFiles.get(key).toPath());
-                    
                     //Write them to the output stream.
                     out.write(preScriptBytes);
                     out.write(scriptHeaderBytes);
                     out.write(scriptBytes);
-                    out.write(postScriptBytes);
+                    out.write(graphicsBytes);
+                    
+                    //Since there was old padding data, we need to figure out exactly how much more padding, if any, we need to add.
+                    int finalFileSize = finalDataSize + footerBytes.length;
+                    int remainder = finalFileSize % SECTOR_SIZE;
+                    int paddingSize = SECTOR_SIZE - remainder;
+                    //If we need to add padding to get the footer to start in the next sector, add it.
+                    if(paddingSize != 0) {
+                        byte[] paddingBytes = new byte[paddingSize];
+                        out.write(paddingBytes);
+                    }
+                    out.write(footerBytes);
                     
                     //Write out the new MDT file.
                     FileUtils.writeToFile(out.toByteArray(), key, ".MDT", ".MDT", outputFilePath);

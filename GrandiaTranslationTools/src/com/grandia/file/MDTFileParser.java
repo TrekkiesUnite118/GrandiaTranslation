@@ -34,6 +34,7 @@ public class MDTFileParser {
 
     private static final int SCRIPT_OFFSET = 96;
     private static final int SCRIPT_HEADER_OFFSET = 88;
+    private static final int END_OF_DATA_OFFSET = 504;
     private static final Logger log = Logger.getLogger(MDTFileParser.class.getName());
     private List<File> fileList = new ArrayList<>();
     private PointerTable pointerTable = new PointerTable();
@@ -120,6 +121,7 @@ public class MDTFileParser {
              * the file into it's 5 parts. Then write them to the output directory.
              */
             for(File f : fileList) {
+                log.log(Level.INFO, "Parsing File " + f.getName());
                 try {
                     //Byte array for the file.
                     byte[] MDTByteArray = Files.readAllBytes(f.toPath());
@@ -135,6 +137,7 @@ public class MDTFileParser {
                     //Get the pointer table entries for the script and script header.
                     PointerTableEntry scriptHeaderEntry = pointerTable.getPointerTableEntry(SCRIPT_HEADER_OFFSET);
                     PointerTableEntry scriptEntry = pointerTable.getPointerTableEntry(SCRIPT_OFFSET);
+                    PointerTableEntry endOfDataEntry = pointerTable.getPointerTableEntry(END_OF_DATA_OFFSET);
                     
                     //If the offset is all xFF, we move to the next one. Other wise...
                     if(!Integer.toHexString(scriptEntry.getOffset()).equals("ffffffff")){
@@ -152,13 +155,17 @@ public class MDTFileParser {
                         FileUtils.writeToFile(scriptHeaderPortionArray, f.getName(), fileExtension, ".SCRIPTHEADER", outputFilePath);
                         
                         //Get the Script portion of the file and write it to the Script file.
-                        int endPosition = scriptEntry.getOffset() + scriptEntry.getSize();
-                        byte[] scriptArray = Arrays.copyOfRange(MDTByteArray, scriptEntry.getOffset(), endPosition);
+                        int scriptEndPosition = scriptEntry.getOffset() + scriptEntry.getSize();
+                        byte[] scriptArray = Arrays.copyOfRange(MDTByteArray, scriptEntry.getOffset(), scriptEndPosition);
                         FileUtils.writeToFile(scriptArray, f.getName(), fileExtension, ".SCRIPT", outputFilePath);
                         
-                        //Get the PostScript portion of the file and write it to the PostScript file.
-                        byte[] postScriptPortionArray = Arrays.copyOfRange(MDTByteArray, endPosition, MDTByteArray.length);
-                        FileUtils.writeToFile(postScriptPortionArray, f.getName(), fileExtension, ".POSTSCRIPT", outputFilePath);
+                        //Get the Graphics portion of the file and write it to the Graphics file.
+                        byte[] graphicsArray = Arrays.copyOfRange(MDTByteArray, scriptEndPosition, endOfDataEntry.getSize());
+                        FileUtils.writeToFile(graphicsArray, f.getName(), fileExtension, ".GRAPHICS", outputFilePath);
+                        
+                        //Get the Footer portion of the file and write it to the Footer file.
+                        byte[] footerArray = Arrays.copyOfRange(MDTByteArray, endOfDataEntry.getSize(), MDTByteArray.length);
+                        FileUtils.writeToFile(footerArray, f.getName(), fileExtension, ".FOOTER", outputFilePath);
                     }
                     
                     
