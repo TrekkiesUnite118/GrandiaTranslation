@@ -121,9 +121,27 @@ public class MDTFileReconstructor {
                     
                     //Determine the difference in size between the old script and the new script.
                     int sizeDiff = scriptBytes.length - scriptEntry.getSize();
-                    
+                    int finalSectorSize = pointerTable.getPointerTableEntry(SECTOR_SIZE_OFFSET_A).getOffset();
+                    int paddingSize = 0;
                     if(sizeDiff > 0) {
                         scriptEntry.setSize(newScriptSize);
+                        //The data must end on a value divisible by 2048 so it fits cleanly into CD Sectors.
+                        int finalDataSize = headerBytes.length + preScriptBytes.length + scriptHeaderBytes.length + scriptBytes.length + graphicsBytes.length;
+                        //Find out how far away we are from the end of the next sector.
+                        int sectorRemainder = finalDataSize % SECTOR_SIZE;
+                        int distanceToNearestsector = SECTOR_SIZE - sectorRemainder;
+                       
+                        //Round our data size up to the nearest sector.
+                        finalDataSize += distanceToNearestsector;
+                        
+                        //Finally determine how many sectors our data takes.
+                        finalSectorSize = finalDataSize / SECTOR_SIZE;
+                        
+                        //Since there was old padding data, we need to figure out exactly how much more padding, if any, we need to add.
+                        int finalFileSize = finalDataSize + footerBytes.length;
+                        int remainder = finalFileSize % SECTOR_SIZE;
+                        paddingSize = SECTOR_SIZE - remainder;
+                        
                     } else {
                         sizeDiff = 0;
                         ByteBuffer newScript = ByteBuffer.allocate(scriptEntry.getSize());
@@ -131,17 +149,7 @@ public class MDTFileReconstructor {
                         scriptBytes = newScript.array();
                     }
                     
-                    //The data must end on a value divisible by 2048 so it fits cleanly into CD Sectors.
-                    int finalDataSize = headerBytes.length + preScriptBytes.length + scriptHeaderBytes.length + scriptBytes.length + graphicsBytes.length;
-                    //Find out how far away we are from the end of the next sector.
-                    int sectorRemainder = finalDataSize % SECTOR_SIZE;
-                    int distanceToNearestsector = SECTOR_SIZE - sectorRemainder;
-                   
-                    //Round our data size up to the nearest sector.
-                    finalDataSize += distanceToNearestsector;
                     
-                    //Finally determine how many sectors our data takes.
-                    int finalSectorSize = finalDataSize / SECTOR_SIZE;
                     
                     //Calculate the new pointer table entries.
                     ByteBuffer bb = ByteBuffer.allocate(4);
@@ -217,10 +225,6 @@ public class MDTFileReconstructor {
                     out.write(scriptBytes);
                     out.write(graphicsBytes);
                     
-                    //Since there was old padding data, we need to figure out exactly how much more padding, if any, we need to add.
-                    int finalFileSize = finalDataSize + footerBytes.length;
-                    int remainder = finalFileSize % SECTOR_SIZE;
-                    int paddingSize = SECTOR_SIZE - remainder;
                     //If we need to add padding to get the footer to start in the next sector, add it.
                     if(paddingSize != 0) {
                         byte[] paddingBytes = new byte[paddingSize];
