@@ -129,19 +129,28 @@ public class ScriptByteSwapper {
                         
                         out.write(sizeByte, 0, sizeByte.length);
                         
+                        //There's one edge case that happens where we can mistake data for a size value and throw the whole thing off.
+                        //To account for that we need to check if the next bytes are 0xF000. If they are, we do nothing and move on.
+                        byte[] nextByte = new byte[2];
+                        if((i+2 < length) && (i+3 < length)) {
+                            nextByte[0] = fileBytes[i+2];
+                            nextByte[1] = fileBytes[i+3];
+                        }
+                        String nextByteString = bytesToHex(nextByte);
+                        
                         String hexValue = bytesToHex(sizeByte);
-                        System.out.println("HexValue: " + hexValue);
-                        if(hexValue.startsWith("9") || hexValue.startsWith("2")) {
-                            System.out.println("HexValue Matched!");
+                        log.log(Level.INFO, "HexValue: " + hexValue);
+                        if((hexValue.startsWith("9") || hexValue.startsWith("2")) && !nextByteString.equals("F000")) {
+                            log.log(Level.INFO, "HexValue Matched!");
                             int size = Integer.parseInt(hexValue.substring(1), 16);
-                            System.out.println("Size is : " + size);
+                            log.log(Level.INFO, "Size is : " + size);
                             byte[] textPortion = new byte[size];
                             new String(textPortion);
                             if(i + 2 < length) {
                                 copyBytes(fileBytes, textPortion, i+2, 0, size);
-                                System.out.println("TextPortion: " + new String(textPortion));
+                                log.log(Level.INFO, "TextPortion: " + new String(textPortion));
                                 textPortion = converting(textPortion);
-                                System.out.println("TextPortion: " + new String(textPortion));
+                                log.log(Level.INFO, "Converted TextPortion: " + new String(textPortion));
                                 
                                 out.write(textPortion, 0, size);
                             }
