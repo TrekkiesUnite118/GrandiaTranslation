@@ -33,6 +33,19 @@ public class MDTFileReconstructor {
     // The values at offset 0x180 and 0x1F4 represent the size of the data in CD Sectors and will need to be updated.
     private static final int SECTOR_SIZE_OFFSET_A = 384;
     private static final int SECTOR_SIZE_OFFSET_B = 496;
+    //These values represent any special data that needs to be at specific sector based offsets.
+    private static final int SPECIAL_DATA_1_START_OFFSET = 400;
+    private static final int SPECIAL_DATA_2_START_OFFSET = 408;
+    private static final int SPECIAL_DATA_3_START_OFFSET = 416;
+    private static final int SPECIAL_DATA_4_START_OFFSET = 424;
+    private static final int SPECIAL_DATA_5_START_OFFSET = 432;
+    private static final int SPECIAL_DATA_6_START_OFFSET = 440;
+    private static final int SPECIAL_DATA_7_START_OFFSET = 448;
+    private static final int SPECIAL_DATA_8_START_OFFSET = 456;
+    private static final int SPECIAL_DATA_9_START_OFFSET = 464;
+    private static final int SPECIAL_DATA_10_START_OFFSET = 472;
+    private static final int SPECIAL_DATA_11_START_OFFSET = 480;
+    private static final int SPECIAL_DATA_12_START_OFFSET = 488;
     //The last two entries do not actually follow the usual pattern of offset/size. It's instead 2 different offsets.
     private static final int LAST_OFFSET = 504;
     private static final int SECTOR_SIZE = 2048;
@@ -121,8 +134,10 @@ public class MDTFileReconstructor {
                     
                     //Determine the difference in size between the old script and the new script.
                     int sizeDiff = scriptBytes.length - scriptEntry.getSize();
-                    int finalSectorSize = pointerTable.getPointerTableEntry(SECTOR_SIZE_OFFSET_A).getOffset();
+                    int originalSectorSize = pointerTable.getPointerTableEntry(SECTOR_SIZE_OFFSET_A).getOffset();
+                    int finalSectorSize = originalSectorSize;
                     int paddingSize = 0;
+                    int sectorSizeDiff = 0;
                     if(sizeDiff > 0) {
                         scriptEntry.setSize(newScriptSize);
                         //The data must end on a value divisible by 2048 so it fits cleanly into CD Sectors.
@@ -138,9 +153,8 @@ public class MDTFileReconstructor {
                         finalSectorSize = finalDataSize / SECTOR_SIZE;
                         
                         //Since there was old padding data, we need to figure out exactly how much more padding, if any, we need to add.
-                        int finalFileSize = finalDataSize + footerBytes.length;
-                        int remainder = finalFileSize % SECTOR_SIZE;
-                        paddingSize = SECTOR_SIZE - remainder;
+                        paddingSize = distanceToNearestsector;
+                        sectorSizeDiff = finalSectorSize - originalSectorSize;
                         
                     } else {
                         sizeDiff = 0;
@@ -153,70 +167,103 @@ public class MDTFileReconstructor {
                     
                     //Calculate the new pointer table entries.
                     ByteBuffer bb = ByteBuffer.allocate(4);
-                    for(int i = 0; i < 512; i +=8) {
-                        //For the Script and Script header entries we keep the sizes we've already set.
-                        if(i == SCRIPT_HEADER_OFFSET) {
-                            bb.putInt(0, scriptHeaderEntry.getOffset());
-                            out.write(bb.array());
-                            bb.putInt(0, scriptHeaderEntry.getSize());
-                            out.write(bb.array());
-                            
-                        }else if(i == SCRIPT_OFFSET) {
-                            bb.putInt(0, scriptEntry.getOffset());
-                            out.write(bb.array());
-                            bb.putInt(0, scriptEntry.getSize());
-                            out.write(bb.array());
-                            
-                        //If offset 0x20, leave it alone    
-                        }else if(i == OFFSET_0X20) {
-                            PointerTableEntry pte = pointerTable.getPointerTableEntry(i);
-                            
-                            bb.putInt(0, pte.getOffset());
-                            out.write(bb.array());
-                            bb.putInt(0, pte.getSize());
-                            out.write(bb.array());
-                        // We need to update both Sector Size offsets correctly.
-                        }else if(i == SECTOR_SIZE_OFFSET_A) {
-                            PointerTableEntry pte = pointerTable.getPointerTableEntry(i);
-                            pte.setOffset(finalSectorSize);
-                            bb.putInt(0, pte.getOffset());
-                            out.write(bb.array());
-                            bb.putInt(0, pte.getSize());
-                            out.write(bb.array());
-                        }else if(i == SECTOR_SIZE_OFFSET_B) {
-                            PointerTableEntry pte = pointerTable.getPointerTableEntry(i);
-                            pte.setSize(finalSectorSize);
-                            bb.putInt(0, pte.getOffset());
-                            out.write(bb.array());
-                            bb.putInt(0, pte.getSize());
-                            out.write(bb.array());
-                        //If last offset, treat as 2 different offsets rather than offset/size.    
-                        }else if (i == LAST_OFFSET) {
-                            PointerTableEntry pte = pointerTable.getPointerTableEntry(i);
-                            if(!Integer.toHexString(pte.getOffset()).equals("ffffffff")
-                                    && !Integer.toHexString(pte.getSize()).equals("ffffffff")) {
-                                pte.setOffset(pte.getOffset() + sizeDiff);
-                                pte.setSize(pte.getSize() + sizeDiff);
+                    for(int i = 0; i < SECTOR_SIZE_OFFSET_A; i +=8) {
+                        
+                        PointerTableEntry pte = pointerTable.getPointerTableEntry(i);
+                        switch(i) {
+                            //For the Script and Script header entries we keep the sizes we've already set.
+                            case SCRIPT_HEADER_OFFSET:
+                                bb.putInt(0, scriptHeaderEntry.getOffset());
+                                out.write(bb.array());
+                                bb.putInt(0, scriptHeaderEntry.getSize());
+                                out.write(bb.array());
+                                break;
+                            case SCRIPT_OFFSET:
+                                bb.putInt(0, scriptEntry.getOffset());
+                                out.write(bb.array());
+                                bb.putInt(0, scriptEntry.getSize());
+                                out.write(bb.array());
+                                break;
+                            //If offset 0x20, leave it alone    
+                            case OFFSET_0X20:
                                 bb.putInt(0, pte.getOffset());
                                 out.write(bb.array());
                                 bb.putInt(0, pte.getSize());
                                 out.write(bb.array());
-                            }
-                        }else {
+                                break;
                             //For all other entries, we update their entires if they come after the script in the file.
-                            PointerTableEntry pte = pointerTable.getPointerTableEntry(i);
-                            if(!Integer.toHexString(pte.getOffset()).equals("ffffffff")) {
-                                if(pte.getOffset() > scriptEntry.getOffset()) {
-                                    pte.setOffset(pte.getOffset() + sizeDiff);
+                            default:
+                                if(!Integer.toHexString(pte.getOffset()).equals("ffffffff")) {
+                                    if(pte.getOffset() > scriptEntry.getOffset()) {
+                                        pte.setOffset(pte.getOffset() + sizeDiff);
+                                    }
                                 }
-                            }
-                            bb.putInt(0, pte.getOffset());
-                            out.write(bb.array());
-                            bb.putInt(0, pte.getSize());
-                            out.write(bb.array());
-                            
+                                bb.putInt(0, pte.getOffset());
+                                out.write(bb.array());
+                                bb.putInt(0, pte.getSize());
+                                out.write(bb.array());
+                                break;
                         }
-                        
+                    }
+                    
+                    for(int i = SECTOR_SIZE_OFFSET_A; i < 512; i+=8) {
+                        PointerTableEntry pte = pointerTable.getPointerTableEntry(i);
+                        switch(i) {
+                            // We need to update both Sector Size offsets And the Last offset correctly.
+                            case SECTOR_SIZE_OFFSET_A:
+                                pte.setOffset(finalSectorSize);
+                                bb.putInt(0, pte.getOffset());
+                                out.write(bb.array());
+                                bb.putInt(0, pte.getSize());
+                                out.write(bb.array());
+                                break;
+                            case SECTOR_SIZE_OFFSET_B:
+                                pte.setSize(finalSectorSize);
+                                bb.putInt(0, pte.getOffset());
+                                out.write(bb.array());
+                                bb.putInt(0, pte.getSize());
+                                out.write(bb.array());
+                                break;
+                            case LAST_OFFSET:
+                                if(!Integer.toHexString(pte.getOffset()).equals("ffffffff")
+                                        && !Integer.toHexString(pte.getSize()).equals("ffffffff")) {
+                                    pte.setOffset(pte.getOffset() + sizeDiff);
+                                    pte.setSize(pte.getSize() + sizeDiff);
+                                    bb.putInt(0, pte.getOffset());
+                                    out.write(bb.array());
+                                    bb.putInt(0, pte.getSize());
+                                    out.write(bb.array());
+                                }
+                                break;
+                            //Next, if any of our special data offsets are not 0xffffffff, then we need to update the offset sector value.
+                            case SPECIAL_DATA_1_START_OFFSET:
+                            case SPECIAL_DATA_2_START_OFFSET:
+                            case SPECIAL_DATA_3_START_OFFSET:
+                            case SPECIAL_DATA_4_START_OFFSET:
+                            case SPECIAL_DATA_5_START_OFFSET:
+                            case SPECIAL_DATA_6_START_OFFSET:
+                            case SPECIAL_DATA_7_START_OFFSET:
+                            case SPECIAL_DATA_8_START_OFFSET:
+                            case SPECIAL_DATA_9_START_OFFSET:
+                            case SPECIAL_DATA_10_START_OFFSET:
+                            case SPECIAL_DATA_11_START_OFFSET:
+                            case SPECIAL_DATA_12_START_OFFSET:
+                                if(!Integer.toHexString(pte.getOffset()).equals("ffffffff")) {
+                                    pte.setOffset(pte.getOffset() + sectorSizeDiff);
+                                }
+                                bb.putInt(0, pte.getOffset());
+                                out.write(bb.array());
+                                bb.putInt(0, pte.getSize());
+                                out.write(bb.array());
+                                break;
+                            //Any other values we leave alone.    
+                            default:
+                                bb.putInt(0, pte.getOffset());
+                                out.write(bb.array());
+                                bb.putInt(0, pte.getSize());
+                                out.write(bb.array());
+                                break;
+                        }
                     }
                     
                     //Write them to the output stream.

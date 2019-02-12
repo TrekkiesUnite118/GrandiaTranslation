@@ -35,6 +35,8 @@ public class MDTFileParser {
     private static final int SCRIPT_OFFSET = 96;
     private static final int SCRIPT_HEADER_OFFSET = 88;
     private static final int END_OF_DATA_OFFSET = 504;
+    private static final int START_OF_SPECIAL_DATA = 384;
+    private static final int SECTOR_SIZE = 2048;
     private static final Logger log = Logger.getLogger(MDTFileParser.class.getName());
     private List<File> fileList = new ArrayList<>();
     private PointerTable pointerTable = new PointerTable();
@@ -138,7 +140,15 @@ public class MDTFileParser {
                     PointerTableEntry scriptHeaderEntry = pointerTable.getPointerTableEntry(SCRIPT_HEADER_OFFSET);
                     PointerTableEntry scriptEntry = pointerTable.getPointerTableEntry(SCRIPT_OFFSET);
                     PointerTableEntry endOfDataEntry = pointerTable.getPointerTableEntry(END_OF_DATA_OFFSET);
+                    PointerTableEntry startOfSpecialDataEntry = pointerTable.getPointerTableEntry(START_OF_SPECIAL_DATA);
                     
+                    
+                    int specialDataOffset = startOfSpecialDataEntry.getOffset();
+                    if(!Integer.toHexString(specialDataOffset).equals("ffffffff")){
+                        specialDataOffset = specialDataOffset * SECTOR_SIZE;
+                    }else {
+                        specialDataOffset = endOfDataEntry.getSize();
+                    }
                     //If the offset is all xFF, we move to the next one. Other wise...
                     if(!Integer.toHexString(scriptEntry.getOffset()).equals("ffffffff")){
                         
@@ -164,7 +174,7 @@ public class MDTFileParser {
                         FileUtils.writeToFile(graphicsArray, f.getName(), fileExtension, ".GRAPHICS", outputFilePath);
                         
                         //Get the Footer portion of the file and write it to the Footer file.
-                        byte[] footerArray = Arrays.copyOfRange(MDTByteArray, endOfDataEntry.getSize(), MDTByteArray.length);
+                        byte[] footerArray = Arrays.copyOfRange(MDTByteArray, specialDataOffset, MDTByteArray.length);
                         FileUtils.writeToFile(footerArray, f.getName(), fileExtension, ".FOOTER", outputFilePath);
                     }
                     
