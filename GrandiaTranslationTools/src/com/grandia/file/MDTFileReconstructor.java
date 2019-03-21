@@ -30,7 +30,7 @@ public class MDTFileReconstructor {
     private static final int SCRIPT_HEADER_OFFSET = 88;
     //The value at offset 0x20 seems to be a common HWRAM location on the Saturn, and shouldn't be modified.
     private static final int OFFSET_0X20 = 32;
-  //The value at offset 0x68 seems to be a common HWRAM location on the Saturn, and shouldn't be modified.
+    //The value at offset 0x68 seems to be a common HWRAM location on the Saturn, and shouldn't be modified.
     private static final int OFFSET_0X68 = 104;
     // The values at offset 0x180 and 0x1F4 represent the size of the data in CD Sectors and will need to be updated.
     private static final int SECTOR_SIZE_OFFSET_A = 384;
