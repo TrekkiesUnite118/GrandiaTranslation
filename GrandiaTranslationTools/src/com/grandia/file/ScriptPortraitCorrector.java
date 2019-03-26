@@ -43,6 +43,7 @@ public class ScriptPortraitCorrector {
     private static String PORTRAIT_CODE_LEFT = "03";
     private static String PORTRAIT_CODE_MIDDLE = "12";
     private static String PORTRAIT_CODE_RIGHT = "21";
+    private static String VERTICAL_ALIGN_CODE = "0A";
     
     private String truthFilePath;
     private String inputFilePath;
@@ -157,11 +158,17 @@ public class ScriptPortraitCorrector {
                             posByte[0] = truthBytes[i+1];
                         } 
                         
+                        byte[] vAlignByte = new byte[1];
+                        if(i+2 != length) {
+                            vAlignByte[0] = truthBytes[i+2];
+                        }
+                        
                         String codeString = bytesToHex(codeByte);
                         String posString = bytesToHex(posByte);
+                        String vAlignString = bytesToHex(vAlignByte);
                         
                         // 0x0F isn't enough, check that the alignment code is there too.
-                        if(codeString.equals(PORTRAIT_CODE) && checkPosString(posString)) {
+                        if(codeString.equals(PORTRAIT_CODE) && checkPosString(posString) && checkVAlignString(vAlignString)) {
                             log.log(Level.INFO, "Found True Portrait Code!: " + codeString);
                             byte[] portraitCode = new byte[6];
                             
@@ -193,11 +200,17 @@ public class ScriptPortraitCorrector {
                             posByte[0] = inputBytes[j+1];
                         } 
                         
+                        byte[] vAlignByte = new byte[1];
+                        if(j + 2 != inputLength) {
+                            vAlignByte[0] = inputBytes[j+2];
+                        }
+                        
                         String codeString = bytesToHex(codeByte);
                         String posString = bytesToHex(posByte);
+                        String vAlignString = bytesToHex(vAlignByte);
                         
                         // 0x0F isn't enough, check that the alignment code is there too.
-                        if(codeString.equals(PORTRAIT_CODE) && checkPosString(posString)) {
+                        if(codeString.equals(PORTRAIT_CODE) && checkPosString(posString) && checkVAlignString(vAlignString)) {
                             log.log(Level.INFO, "Found Input Portrait Code!: " + codeString);
                             byte[] portraitCode = new byte[6];
                             
@@ -275,6 +288,14 @@ public class ScriptPortraitCorrector {
    
     private boolean checkPosString(String posString) {
         if(posString.equals(PORTRAIT_CODE_LEFT) || posString.equals(PORTRAIT_CODE_MIDDLE) || posString.equals(PORTRAIT_CODE_RIGHT)) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+    
+    private boolean checkVAlignString(String vAlignString) {
+        if(vAlignString.equals(VERTICAL_ALIGN_CODE)) {
             return true;
         } else {
             return false;
