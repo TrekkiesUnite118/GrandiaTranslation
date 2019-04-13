@@ -21,7 +21,7 @@ import com.grandia.file.utils.FileUtils;
  * SVLDFileEditor
  * 
  * This utility will replace text values in the SVLD.BIN file with new values.
- * It will then updates all the HWRAM offsets in the file accordingly.
+ * It will then update all the HWRAM offsets in the file accordingly.
  * 
  * @author TrekkiesUnite118
  *
@@ -128,7 +128,7 @@ public class SVLDFileEditor {
         //Determine how much we need to update the offsets by.
         int delta = newValue.length - oldValue.length;
         
-        //Determin the anchor point and call update Offsets if the size changed.
+        //Determine the anchor point and call update Offsets if the size changed.
         if(delta != 0) {
             int anchorOffset = fieldToOffsetMap.get(key) + MEM_OFFSET_START;
             updateOffsets(delta, anchorOffset);
