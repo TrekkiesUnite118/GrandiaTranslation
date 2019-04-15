@@ -5,7 +5,9 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.file.Files;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -65,6 +67,7 @@ public class ScriptReconstructor {
             //Read the directory to find out what files we need to parse
             FileUtils.populateFileMap(fileMap, inputScriptFilePath, "");
             File header = new File(inputScriptHeaderFilePath);
+            List<String> fileNames = new ArrayList<>();
             
             //Create ByteArrayOutputStreams
             ByteArrayOutputStream outHeader = new ByteArrayOutputStream();
@@ -80,7 +83,14 @@ public class ScriptReconstructor {
                     PointerTableEntry pte = pointerTable.getPointerTableEntry(i);
                     
                     if(!Integer.toHexString(pte.getId()).equals("ffff")) {
-                        File file = fileMap.get(Integer.toHexString(pte.getId()));
+                        if(!fileNames.contains(pte.getStringId())) {
+                            fileNames.add(pte.getStringId());
+                        }else {
+                            pte.setStringId(pte.getStringId() + i);
+                            fileNames.add(pte.getStringId());
+                            pointerTable.addOrUpdatePointerTableEntry(i, pte);
+                        }
+                        File file = fileMap.get(pte.getStringId());
                         int size = Math.toIntExact(file.length());
                         pte.setSize(size);
                         pointerTable.addOrUpdatePointerTableEntry(i, pte);
@@ -119,7 +129,7 @@ public class ScriptReconstructor {
                 for(int i = 0; i < pointerTable.getSize(); i++) {
                     PointerTableEntry pte = pointerTable.getPointerTableEntry(i);
                     if(!Integer.toHexString(pte.getId()).equals("ffff")) {
-                        File f = fileMap.get(Integer.toHexString(pte.getId()));
+                        File f = fileMap.get(pte.getStringId());
                         byte[] fBytes = Files.readAllBytes(f.toPath());
                         outScript.write(fBytes);
                     }

@@ -3,7 +3,9 @@ package com.grandia.file;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -59,6 +61,8 @@ public class ScriptParser {
             File header = new File(inputScriptHeaderFilePath);
             File script = new File(inputScriptFilePath);
             
+            List<String> fileNames = new ArrayList<>();
+            
             try {
                 byte[] headerByteArray = Files.readAllBytes(header.toPath());
                 byte[] scriptByteArray = Files.readAllBytes(script.toPath());
@@ -68,11 +72,17 @@ public class ScriptParser {
                     if(i+1 != pointerTable.getSize()) {
                         PointerTableEntry pte = pointerTable.getPointerTableEntry(i);
                         if(!Integer.toHexString(pte.getId()).equals("ffff")) {
+                            if(!fileNames.contains(pte.getStringId())) {
+                                fileNames.add(pte.getStringId());
+                            }else {
+                                pte.setStringId(pte.getStringId() + i);
+                                fileNames.add(pte.getStringId());
+                            }
                             if(pte.getSize() == 0) {
                                 pte.setSize(scriptByteArray.length - pte.getOffset());
                             }
                             byte[] scriptPieceArray = Arrays.copyOfRange(scriptByteArray, pte.getOffset(), pte.getOffset() + pte.getSize());
-                            FileUtils.writeToFile(scriptPieceArray, Integer.toHexString(pte.getId()), outputFilePath + "\\");
+                            FileUtils.writeToFile(scriptPieceArray, pte.getStringId(), outputFilePath + "\\");
                         }
                     }
                 }
