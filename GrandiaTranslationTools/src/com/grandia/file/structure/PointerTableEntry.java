@@ -20,6 +20,9 @@ public class PointerTableEntry {
     //ID for the entry
     private int id;
     
+    private String stringId;
+    
+    
     public PointerTableEntry tableOffset(int tableOffset) {
         this.tableOffset = tableOffset;
         return this;
@@ -37,6 +40,11 @@ public class PointerTableEntry {
     
     public PointerTableEntry id(int id) {
         this.id = id;
+        return this;
+    }
+    
+    public PointerTableEntry stringId(String stringId) {
+        this.stringId = stringId;
         return this;
     }
 
@@ -94,6 +102,14 @@ public class PointerTableEntry {
 
     public void setId(int id) {
         this.id = id;
+    }
+
+    public String getStringId() {
+        return stringId;
+    }
+
+    public void setStringId(String stringId) {
+        this.stringId = stringId;
     }
 
     public String toString() {

@@ -83,7 +83,9 @@ public class ScriptPointerTable {
                 }
                 
                 //Set the id in the pointer table entry to the bytes we just read off.
-                pte.id(Short.toUnsignedInt(bb.getShort()));
+                int id = Short.toUnsignedInt(bb.getShort());
+                pte.id(id);
+                pte.stringId(Integer.toHexString(id));
                 
                 //Move ahead 2 bytes and read.
                 i += 2;
