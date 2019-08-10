@@ -135,115 +135,117 @@ public class ScriptPortraitCorrector {
                 File input = inputFileMap.get(key);
                 Map<Integer, PortraitCode> truePortraitCodes = new HashMap<>();
                 Map<Integer, PortraitCode> inputPortraitCodes = new HashMap<>(); 
-                try {
-                    
-                    byte[] truthBytes = Files.readAllBytes(truth.toPath());
-                    byte[] inputBytes = Files.readAllBytes(input.toPath());
-                    
-                    int length = truthBytes.length;
-                    int inputLength = inputBytes.length;
-                    
-                    //Counters for portraits found.
-                    int trueCodeNum = 0;
-                    int inputCodeNum = 0;
-                    
-                    int i = 0;
-                    //Check each byte of the truth file for portrait codes, if you find one add it to the map.
-                    while (i + 1 < length) {
-                        byte[] codeByte = new byte[1];
-                        codeByte[0] = truthBytes[i];
+                if(input != null && truth != null) {
+                    try {
                         
-                        byte[] posByte = new byte[1];
-                        if( i + 1 != length) {
-                            posByte[0] = truthBytes[i+1];
-                        } 
+                        byte[] truthBytes = Files.readAllBytes(truth.toPath());
+                        byte[] inputBytes = Files.readAllBytes(input.toPath());
                         
-                        byte[] vAlignByte = new byte[1];
-                        if(i+2 != length) {
-                            vAlignByte[0] = truthBytes[i+2];
+                        int length = truthBytes.length;
+                        int inputLength = inputBytes.length;
+                        
+                        //Counters for portraits found.
+                        int trueCodeNum = 0;
+                        int inputCodeNum = 0;
+                        
+                        int i = 0;
+                        //Check each byte of the truth file for portrait codes, if you find one add it to the map.
+                        while (i + 1 < length) {
+                            byte[] codeByte = new byte[1];
+                            codeByte[0] = truthBytes[i];
+                            
+                            byte[] posByte = new byte[1];
+                            if( i + 1 != length) {
+                                posByte[0] = truthBytes[i+1];
+                            } 
+                            
+                            byte[] vAlignByte = new byte[1];
+                            if(i+2 != length) {
+                                vAlignByte[0] = truthBytes[i+2];
+                            }
+                            
+                            String codeString = bytesToHex(codeByte);
+                            String posString = bytesToHex(posByte);
+                            String vAlignString = bytesToHex(vAlignByte);
+                            
+                            // 0x0F isn't enough, check that the alignment code is there too.
+                            if(codeString.equals(PORTRAIT_CODE) && checkPosString(posString) && checkVAlignString(vAlignString)) {
+                                log.log(Level.INFO, "Found True Portrait Code!: " + codeString);
+                                byte[] portraitCode = new byte[6];
+                                
+                                portraitCode[0] = truthBytes[i];
+                                portraitCode[1] = truthBytes[i + 1];
+                                portraitCode[2] = truthBytes[i + 2];
+                                portraitCode[3] = truthBytes[i + 3];
+                                portraitCode[4] = truthBytes[i + 4];
+                                portraitCode[5] = truthBytes[i + 5];
+                                
+                                PortraitCode trueCode = new PortraitCode(portraitCode, i);
+                                truePortraitCodes.put(trueCodeNum, trueCode);
+                                i += 6;
+                                trueCodeNum++;
+                                
+                            } else {
+                                i++;
+                            }
                         }
                         
-                        String codeString = bytesToHex(codeByte);
-                        String posString = bytesToHex(posByte);
-                        String vAlignString = bytesToHex(vAlignByte);
-                        
-                        // 0x0F isn't enough, check that the alignment code is there too.
-                        if(codeString.equals(PORTRAIT_CODE) && checkPosString(posString) && checkVAlignString(vAlignString)) {
-                            log.log(Level.INFO, "Found True Portrait Code!: " + codeString);
-                            byte[] portraitCode = new byte[6];
+                        int j = 0;
+                        // Check each byte of the input file for portrait codes. if you find one add it to the map.
+                        while (j + 1 < inputLength) {
+                            byte[] codeByte = new byte[1];
+                            codeByte[0] = inputBytes[j];
                             
-                            portraitCode[0] = truthBytes[i];
-                            portraitCode[1] = truthBytes[i + 1];
-                            portraitCode[2] = truthBytes[i + 2];
-                            portraitCode[3] = truthBytes[i + 3];
-                            portraitCode[4] = truthBytes[i + 4];
-                            portraitCode[5] = truthBytes[i + 5];
+                            byte[] posByte = new byte[1];
+                            if( j + 1 != inputLength) {
+                                posByte[0] = inputBytes[j+1];
+                            } 
                             
-                            PortraitCode trueCode = new PortraitCode(portraitCode, i);
-                            truePortraitCodes.put(trueCodeNum, trueCode);
-                            i += 6;
-                            trueCodeNum++;
+                            byte[] vAlignByte = new byte[1];
+                            if(j + 2 != inputLength) {
+                                vAlignByte[0] = inputBytes[j+2];
+                            }
                             
-                        } else {
-                            i++;
+                            String codeString = bytesToHex(codeByte);
+                            String posString = bytesToHex(posByte);
+                            String vAlignString = bytesToHex(vAlignByte);
+                            
+                            // 0x0F isn't enough, check that the alignment code is there too.
+                            if(codeString.equals(PORTRAIT_CODE) && checkPosString(posString) && checkVAlignString(vAlignString)) {
+                                log.log(Level.INFO, "Found Input Portrait Code!: " + codeString);
+                                byte[] portraitCode = new byte[6];
+                                
+                                portraitCode[0] = inputBytes[j];
+                                portraitCode[1] = inputBytes[j + 1];
+                                portraitCode[2] = inputBytes[j + 2];
+                                portraitCode[3] = inputBytes[j + 3];
+                                portraitCode[4] = inputBytes[j + 4];
+                                portraitCode[5] = inputBytes[j + 5];
+                                
+                                PortraitCode inputCode = new PortraitCode(portraitCode, j);
+                                inputPortraitCodes.put(inputCodeNum, inputCode);
+                                j += 6;
+                                inputCodeNum++;
+                            }else {
+                                j++;
+                            }
                         }
+                        
+                        //If we found the same number of portrait codes, attempt to update.
+                        if(inputCodeNum == trueCodeNum) {
+                            log.log(Level.INFO, "Number of Portraits Match: " + trueCodeNum);
+                            inputBytes = compareAndUpdateCodes(truePortraitCodes, inputPortraitCodes, inputBytes);
+                        }
+                        
+                        //Write out to file.
+                        ByteArrayOutputStream out = new ByteArrayOutputStream();
+                        out.write(inputBytes);
+                        log.log(Level.INFO, "Writing to file...");
+                        FileUtils.writeToFile(out.toByteArray(), input.getName(), outputFilePath);
+                    } catch (IOException e) {
+                        log.log(Level.SEVERE, "Caught IOException attempting to read bytes.", e);
+                        e.printStackTrace();
                     }
-                    
-                    int j = 0;
-                    // Check each byte of the input file for portrait codes. if you find one add it to the map.
-                    while (j + 1 < inputLength) {
-                        byte[] codeByte = new byte[1];
-                        codeByte[0] = inputBytes[j];
-                        
-                        byte[] posByte = new byte[1];
-                        if( j + 1 != inputLength) {
-                            posByte[0] = inputBytes[j+1];
-                        } 
-                        
-                        byte[] vAlignByte = new byte[1];
-                        if(j + 2 != inputLength) {
-                            vAlignByte[0] = inputBytes[j+2];
-                        }
-                        
-                        String codeString = bytesToHex(codeByte);
-                        String posString = bytesToHex(posByte);
-                        String vAlignString = bytesToHex(vAlignByte);
-                        
-                        // 0x0F isn't enough, check that the alignment code is there too.
-                        if(codeString.equals(PORTRAIT_CODE) && checkPosString(posString) && checkVAlignString(vAlignString)) {
-                            log.log(Level.INFO, "Found Input Portrait Code!: " + codeString);
-                            byte[] portraitCode = new byte[6];
-                            
-                            portraitCode[0] = inputBytes[j];
-                            portraitCode[1] = inputBytes[j + 1];
-                            portraitCode[2] = inputBytes[j + 2];
-                            portraitCode[3] = inputBytes[j + 3];
-                            portraitCode[4] = inputBytes[j + 4];
-                            portraitCode[5] = inputBytes[j + 5];
-                            
-                            PortraitCode inputCode = new PortraitCode(portraitCode, j);
-                            inputPortraitCodes.put(inputCodeNum, inputCode);
-                            j += 6;
-                            inputCodeNum++;
-                        }else {
-                            j++;
-                        }
-                    }
-                    
-                    //If we found the same number of portrait codes, attempt to update.
-                    if(inputCodeNum == trueCodeNum) {
-                        log.log(Level.INFO, "Number of Portraits Match: " + trueCodeNum);
-                        inputBytes = compareAndUpdateCodes(truePortraitCodes, inputPortraitCodes, inputBytes);
-                    }
-                    
-                    //Write out to file.
-                    ByteArrayOutputStream out = new ByteArrayOutputStream();
-                    out.write(inputBytes);
-                    log.log(Level.INFO, "Writing to file...");
-                    FileUtils.writeToFile(out.toByteArray(), input.getName(), outputFilePath);
-                } catch (IOException e) {
-                    log.log(Level.SEVERE, "Caught IOException attempting to read bytes.", e);
-                    e.printStackTrace();
                 }
             }
         }
@@ -269,7 +271,8 @@ public class ScriptPortraitCorrector {
             log.log(Level.INFO, "Truth: " + bytesToHex(truth.getCode()));
             log.log(Level.INFO, "Input: " + bytesToHex(input.getCode()));
             
-            if(truth.getCode() != input.getCode()) {
+            if(!bytesToHex(truth.getCode()).equals(bytesToHex(input.getCode()))) {
+                log.log(Level.INFO, "Portraits Do Not Match!");
                 int inputOffset = input.getOffset();
                 byte[] truthCode = truth.getCode();
                 
