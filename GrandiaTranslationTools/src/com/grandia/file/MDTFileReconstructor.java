@@ -119,7 +119,7 @@ public class MDTFileReconstructor {
                     //Parse in the pointer table.
                     ByteArrayOutputStream out = new ByteArrayOutputStream();
                     byte[] headerBytes = Files.readAllBytes(headerFiles.get(key).toPath());
-                    pointerTable.parsePointerTableFromByteArray(headerBytes, true);
+                    pointerTable.parsePointerTableFromByteArray(headerBytes, true, true);
                     PointerTableEntry scriptHeaderEntry = pointerTable.getPointerTableEntry(SCRIPT_HEADER_OFFSET);
                     PointerTableEntry scriptEntry = pointerTable.getPointerTableEntry(SCRIPT_OFFSET);
                     //printPointerTable();

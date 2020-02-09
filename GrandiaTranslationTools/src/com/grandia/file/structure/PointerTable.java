@@ -54,13 +54,18 @@ public class PointerTable {
      * to create a PointerTableEntry Object to put in our PointerTable.
      * 
      * @param headerArray
+     * @param bigEndian - True if pointers are in Big Endian
+     * @param parseSize - True if pointer entry includes size values.
      */
-    public void parsePointerTableFromByteArray(byte[] headerArray, boolean bigEndian) {
+    public void parsePointerTableFromByteArray(byte[] headerArray, boolean bigEndian, boolean parseSize) {
         
         log.log(Level.INFO, "Header size is : " + headerArray.length);
-        
+        int entrySize = 8;
+        if(!parseSize) {
+            entrySize = 4;
+        }
         //First we check that the header array is divisible by 8. If it's not, then we've made a mistake in getting it out of the file.
-        if(headerArray.length % 8 == 0) {
+        if(headerArray.length % entrySize == 0) {
             int i = 0;
             while(i < headerArray.length) {
                 
@@ -80,24 +85,26 @@ public class PointerTable {
                 
                 //Set the offset in the pointer table entry to the bytes we just read off.
                 pte.offset(bb.getInt());
+
                 
-                //Move ahead 4 bytes and read.
-                i += 4;
-                bb = ByteBuffer.wrap(headerArray, i, 4);
-                
-                /*
-                 * Set the endianess.
-                 */
-                if(!bigEndian) {
-                    bb.order(ByteOrder.LITTLE_ENDIAN);
+               if(parseSize) {
+                    
+                    //Move ahead 4 bytes and read.
+                    i += 4;
+                    bb = ByteBuffer.wrap(headerArray, i, 4);
+                    
+                    /*
+                     * Set the endianess.
+                     */
+                    if(!bigEndian) {
+                        bb.order(ByteOrder.LITTLE_ENDIAN);
+                    }
+                    
+                    //Set the size to the bytes we just read.
+                    pte.size(bb.getInt());
                 }
-                
-                //Set the size to the bytes we just read.
-                pte.size(bb.getInt());
-                
                 //Move ahead 4 bytes.
                 i += 4;
-                
                 //Add the new PointerTableEntry to the PointerTable.
                 this.addOrUpdatePointerTableEntry(pte);
             }

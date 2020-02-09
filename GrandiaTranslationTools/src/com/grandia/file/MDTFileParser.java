@@ -131,7 +131,7 @@ public class MDTFileParser {
                     byte[] headerArray = Arrays.copyOfRange(MDTByteArray, 0, 512);
                     
                     //Parse the Header into a PointerTable object.
-                    pointerTable.parsePointerTableFromByteArray(headerArray, bigEndian);
+                    pointerTable.parsePointerTableFromByteArray(headerArray, bigEndian, true);
                     
                     //Debug code if you want to see what is being read in from the pointe rtable.
                     //printPointerTable();
