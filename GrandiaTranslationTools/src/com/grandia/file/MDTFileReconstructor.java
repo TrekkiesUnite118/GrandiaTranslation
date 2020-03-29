@@ -28,6 +28,7 @@ public class MDTFileReconstructor {
     
     private static final int SCRIPT_OFFSET = 96;
     private static final int SCRIPT_HEADER_OFFSET = 88;
+    private static final int ASM_CODE_OFFSET = 72;
     //The value at offset 0x20 seems to be a common HWRAM location on the Saturn, and shouldn't be modified.
     private static final int OFFSET_0X20 = 32;
     //The value at offset 0x68 seems to be a common HWRAM location on the Saturn, and shouldn't be modified.
@@ -106,6 +107,18 @@ public class MDTFileReconstructor {
             Map<String, File> scriptFiles = new HashMap<>();
             FileUtils.populateFileMap(scriptFiles, inputFilePath, ".SCRIPT");
             
+            Map<String, File> gfx1Files = new HashMap<>();
+            FileUtils.populateFileMap(gfx1Files, inputFilePath, ".GFX1");
+            
+            Map<String, File> asmFiles = new HashMap<>();
+            FileUtils.populateFileMap(asmFiles, inputFilePath, ".ASM");
+            
+            Map<String, File> gfx2Files = new HashMap<>();
+            FileUtils.populateFileMap(gfx2Files, inputFilePath, ".GFX2");
+            
+            Map<String, File> gfx3Files = new HashMap<>();
+            FileUtils.populateFileMap(gfx3Files, inputFilePath, ".GFX3");
+            
             Map<String, File> graphicsFiles = new HashMap<>();
             FileUtils.populateFileMap(graphicsFiles, inputFilePath, ".GRAPHICS");
             
@@ -122,6 +135,7 @@ public class MDTFileReconstructor {
                     pointerTable.parsePointerTableFromByteArray(headerBytes, true, true);
                     PointerTableEntry scriptHeaderEntry = pointerTable.getPointerTableEntry(SCRIPT_HEADER_OFFSET);
                     PointerTableEntry scriptEntry = pointerTable.getPointerTableEntry(SCRIPT_OFFSET);
+                    PointerTableEntry asmEntry = pointerTable.getPointerTableEntry(ASM_CODE_OFFSET);
                     //printPointerTable();
                     
                     //Read the rest of the file pieces in.
@@ -134,12 +148,34 @@ public class MDTFileReconstructor {
                     byte[] scriptBytes = Files.readAllBytes(scriptFiles.get(key).toPath());
                     int newScriptSize = scriptBytes.length;
                     
+                    //Determine the new asm size.
+                    int newAsmSize = 0;
+                    byte[] asmBytes = null;
+                    byte[] gfx1Bytes = null;
+                    byte[] gfx2Bytes = null;
+                    byte[] gfx3Bytes = null;
+                    int gfx1Size = 0;
+                    int gfx2Size = 0;
+                    int gfx3Size = 0;
+                    if(asmFiles.containsKey(key)) {
+                        asmBytes = Files.readAllBytes(asmFiles.get(key).toPath());
+                        newAsmSize = asmBytes.length;
+                        
+                        gfx1Bytes = Files.readAllBytes(gfx1Files.get(key).toPath());
+                        gfx1Size = gfx1Bytes.length;
+                        if(gfx2Files.containsKey(key)) {
+                            gfx2Bytes = Files.readAllBytes(gfx2Files.get(key).toPath());
+                            gfx2Size = gfx2Bytes.length;
+                        }
+                        if(gfx3Files.containsKey(key)) {
+                            gfx3Bytes = Files.readAllBytes(gfx3Files.get(key).toPath());
+                            gfx3Size = gfx3Bytes.length;
+                        }
+                        
+                    }
+                    
                     //Determine the difference in size between the old script and the new script.
                     int sizeDiff = scriptBytes.length - scriptEntry.getSize();
-                    int originalSectorSize = pointerTable.getPointerTableEntry(SECTOR_SIZE_OFFSET_A).getOffset();
-                    int finalSectorSize = originalSectorSize;
-                    int paddingSize = 0;
-                    int sectorSizeDiff = 0;
                     if(sizeDiff < 0) {
                         
                         sizeDiff = 0;
@@ -148,10 +184,36 @@ public class MDTFileReconstructor {
                         scriptBytes = newScript.array();
                         newScriptSize = scriptBytes.length;
                     }
-                    
                     scriptEntry.setSize(newScriptSize);
+                    
+                    //Determine the difference in size between the old asm and the new asm.
+                    int asmSize = asmEntry.getSize();
+                    int asmSizeDiff = 0;
+                    if(!Integer.toHexString(asmSize).equals("ffffffff") && asmBytes != null) {
+                        asmSizeDiff = asmBytes.length - asmEntry.getSize();
+                        if(asmSizeDiff < 0) {
+                            
+                            asmSizeDiff = 0;
+                            ByteBuffer newAsm = ByteBuffer.allocate(asmEntry.getSize());
+                            newAsm.put(asmBytes);
+                            asmBytes = newAsm.array();
+                            newAsmSize = asmBytes.length;
+                        }
+                        asmEntry.setSize(newAsmSize);
+                    }
+                    
+                    //Prepare for calculating new sector Size.
+                    int originalSectorSize = pointerTable.getPointerTableEntry(SECTOR_SIZE_OFFSET_A).getOffset();
+                    int finalSectorSize = originalSectorSize;
+                    int paddingSize = 0;
+                    int sectorSizeDiff = 0;
                     //The data must end on a value divisible by 2048 so it fits cleanly into CD Sectors.
-                    int finalDataSize = headerBytes.length + preScriptBytes.length + scriptHeaderBytes.length + scriptBytes.length + graphicsBytes.length;
+                    int finalDataSize = 0;
+                    if(asmBytes == null) {
+                        finalDataSize = headerBytes.length + preScriptBytes.length + scriptHeaderBytes.length + scriptBytes.length + graphicsBytes.length;
+                    } else {
+                        finalDataSize = headerBytes.length + preScriptBytes.length + scriptHeaderBytes.length + scriptBytes.length + gfx1Size + asmBytes.length + gfx2Size + gfx3Size;
+                    }
                     //Find out how far away we are from the end of the next sector.
                     int sectorRemainder = finalDataSize % SECTOR_SIZE;
                     int distanceToNearestsector = SECTOR_SIZE - sectorRemainder;
@@ -205,6 +267,8 @@ public class MDTFileReconstructor {
                                 if(!Integer.toHexString(pte.getOffset()).equals("ffffffff")) {
                                     if(pte.getOffset() > scriptEntry.getOffset()) {
                                         pte.setOffset(pte.getOffset() + sizeDiff);
+                                    } else if(pte.getOffset() > asmEntry.getOffset()) {
+                                        pte.setOffset(pte.getOffset() + sizeDiff + asmSizeDiff);
                                     }
                                 }
                                 bb.putInt(0, pte.getOffset());
@@ -236,8 +300,8 @@ public class MDTFileReconstructor {
                             case LAST_OFFSET:
                                 if(!Integer.toHexString(pte.getOffset()).equals("ffffffff")
                                         && !Integer.toHexString(pte.getSize()).equals("ffffffff")) {
-                                    pte.setOffset(pte.getOffset() + sizeDiff);
-                                    pte.setSize(pte.getSize() + sizeDiff);
+                                    pte.setOffset(pte.getOffset() + sizeDiff + asmSizeDiff);
+                                    pte.setSize(pte.getSize() + sizeDiff + asmSizeDiff);
                                     bb.putInt(0, pte.getOffset());
                                     out.write(bb.array());
                                     bb.putInt(0, pte.getSize());
@@ -279,7 +343,19 @@ public class MDTFileReconstructor {
                     out.write(preScriptBytes);
                     out.write(scriptHeaderBytes);
                     out.write(scriptBytes);
-                    out.write(graphicsBytes);
+                    
+                    if(asmBytes == null) {
+                        out.write(graphicsBytes);
+                    } else {
+                        out.write(gfx1Bytes);
+                        out.write(asmBytes);
+                        if(gfx2Bytes != null) {
+                            out.write(gfx2Bytes);
+                        }
+                        if(gfx3Bytes != null) {
+                            out.write(gfx3Bytes);
+                        }
+                    }
                     
                     //If we need to add padding to get the footer to start in the next sector, add it.
                     if(paddingSize != 0) {

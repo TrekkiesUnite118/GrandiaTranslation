@@ -34,6 +34,20 @@ public class MDTFileParser {
 
     private static final int SCRIPT_OFFSET = 96;
     private static final int SCRIPT_HEADER_OFFSET = 88;
+    
+    /*
+     * It turns out that some files have embedded programs to deal with scripted events. 
+     * If these are present the GRAPHICS file will be broken down into the following:
+     * 
+     * GFX1 = Data before the program
+     * ASM = The program
+     * GFX2 = Data after the program
+     * GFX3 = More data after the program.
+     */
+    private static final int GFX_OFFSET = 112;
+    private static final int GFX_OFFSET_2 = 192;
+    private static final int GFX_OFFSET_3 = 216;
+    private static final int ASM_CODE_OFFSET = 72;
     private static final int END_OF_DATA_OFFSET = 504;
     private static final int START_OF_SPECIAL_DATA = 384;
     private static final int SECTOR_SIZE = 2048;
@@ -133,12 +147,16 @@ public class MDTFileParser {
                     //Parse the Header into a PointerTable object.
                     pointerTable.parsePointerTableFromByteArray(headerArray, bigEndian, true);
                     
-                    //Debug code if you want to see what is being read in from the pointe rtable.
+                    //Debug code if you want to see what is being read in from the pointer table.
                     //printPointerTable();
                     
                     //Get the pointer table entries for the script and script header.
                     PointerTableEntry scriptHeaderEntry = pointerTable.getPointerTableEntry(SCRIPT_HEADER_OFFSET);
                     PointerTableEntry scriptEntry = pointerTable.getPointerTableEntry(SCRIPT_OFFSET);
+                    PointerTableEntry asmEntry = pointerTable.getPointerTableEntry(ASM_CODE_OFFSET);
+                    PointerTableEntry gfx1Entry = pointerTable.getPointerTableEntry(GFX_OFFSET);
+                    PointerTableEntry gfx2Entry = pointerTable.getPointerTableEntry(GFX_OFFSET_2);
+                    PointerTableEntry gfx3Entry = pointerTable.getPointerTableEntry(GFX_OFFSET_3);
                     PointerTableEntry endOfDataEntry = pointerTable.getPointerTableEntry(END_OF_DATA_OFFSET);
                     PointerTableEntry startOfSpecialDataEntry = pointerTable.getPointerTableEntry(START_OF_SPECIAL_DATA);
                     
@@ -158,6 +176,35 @@ public class MDTFileParser {
                         //Get the PreScript portion of the file and write it to the PreScript file.
                         byte[] preScriptPortionArray = Arrays.copyOfRange(MDTByteArray, 512, scriptHeaderEntry.getOffset());
                         FileUtils.writeToFile(preScriptPortionArray, f.getName(), fileExtension, ".PRESCRIPT", outputFilePath);
+                        
+                        //Get the PreScript portion of the file and write it to the PreScript file.
+                        int asmOffset = asmEntry.getOffset();
+                        if(!Integer.toHexString(asmOffset).equals("ffffffff")){
+                            int asmEntryEndPosition = asmEntry.getOffset() + asmEntry.getSize();
+                            byte[] asmPortionArray = Arrays.copyOfRange(MDTByteArray, asmEntry.getOffset() ,asmEntryEndPosition);
+                            FileUtils.writeToFile(asmPortionArray, f.getName(), fileExtension, ".ASM", outputFilePath);
+                            
+                            int gfx1Size = asmEntry.getOffset() - gfx1Entry.getOffset();
+                            
+                            int gfx1EntryEndPosition = gfx1Entry.getOffset() + gfx1Size;
+                            byte[] gfx1PortionArray = Arrays.copyOfRange(MDTByteArray, gfx1Entry.getOffset() ,gfx1EntryEndPosition);
+                            FileUtils.writeToFile(gfx1PortionArray, f.getName(), fileExtension, ".GFX1", outputFilePath);
+                            
+                            int gfx2Offset = gfx2Entry.getOffset();
+                            if(!Integer.toHexString(gfx2Offset).equals("ffffffff")){
+                                int gfx2EntryEndPosition = gfx2Entry.getOffset() + gfx2Entry.getSize();
+                                byte[] gfx2PortionArray = Arrays.copyOfRange(MDTByteArray, gfx2Entry.getOffset() ,gfx2EntryEndPosition);
+                                FileUtils.writeToFile(gfx2PortionArray, f.getName(), fileExtension, ".GFX2", outputFilePath);
+                            }
+                            
+                            int gfx3Offset = gfx3Entry.getOffset();
+                            if(!Integer.toHexString(gfx3Offset).equals("ffffffff")){
+                                int gfx3EntryEndPosition = gfx3Entry.getOffset() + gfx3Entry.getSize();
+                                byte[] gfx3PortionArray = Arrays.copyOfRange(MDTByteArray, gfx3Entry.getOffset() ,gfx3EntryEndPosition);
+                                FileUtils.writeToFile(gfx3PortionArray, f.getName(), fileExtension, ".GFX3", outputFilePath);
+                            }
+                            
+                        }
                         
                         //Get the Script Header portion of the file and write it to the ScriptHeader file.
                         int scriptHeaderEndPosition = scriptHeaderEntry.getOffset() + scriptHeaderEntry.getSize();
