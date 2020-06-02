@@ -44,9 +44,12 @@ public class MDTFileParser {
      * GFX2 = Data after the program
      * GFX3 = More data after the program.
      */
-    private static final int GFX_OFFSET = 112;
+    
+    private static final int GFX_HEADER_OFFSET = 112;
+    private static final int GFX_OFFSET_1 = 128;
     private static final int GFX_OFFSET_2 = 192;
     private static final int GFX_OFFSET_3 = 216;
+    private static final int GFX_OFFSET_5 = 120;
     private static final int ASM_CODE_OFFSET = 72;
     private static final int END_OF_DATA_OFFSET = 504;
     private static final int START_OF_SPECIAL_DATA = 384;
@@ -154,9 +157,11 @@ public class MDTFileParser {
                     PointerTableEntry scriptHeaderEntry = pointerTable.getPointerTableEntry(SCRIPT_HEADER_OFFSET);
                     PointerTableEntry scriptEntry = pointerTable.getPointerTableEntry(SCRIPT_OFFSET);
                     PointerTableEntry asmEntry = pointerTable.getPointerTableEntry(ASM_CODE_OFFSET);
-                    PointerTableEntry gfx1Entry = pointerTable.getPointerTableEntry(GFX_OFFSET);
+                    PointerTableEntry gfxHEntry = pointerTable.getPointerTableEntry(GFX_HEADER_OFFSET);
+                    PointerTableEntry gfx1Entry = pointerTable.getPointerTableEntry(GFX_OFFSET_1);
                     PointerTableEntry gfx2Entry = pointerTable.getPointerTableEntry(GFX_OFFSET_2);
                     PointerTableEntry gfx3Entry = pointerTable.getPointerTableEntry(GFX_OFFSET_3);
+                    PointerTableEntry gfx5Entry = pointerTable.getPointerTableEntry(GFX_OFFSET_5);
                     PointerTableEntry endOfDataEntry = pointerTable.getPointerTableEntry(END_OF_DATA_OFFSET);
                     PointerTableEntry startOfSpecialDataEntry = pointerTable.getPointerTableEntry(START_OF_SPECIAL_DATA);
                     
@@ -184,11 +189,45 @@ public class MDTFileParser {
                             byte[] asmPortionArray = Arrays.copyOfRange(MDTByteArray, asmEntry.getOffset() ,asmEntryEndPosition);
                             FileUtils.writeToFile(asmPortionArray, f.getName(), fileExtension, ".ASM", outputFilePath);
                             
-                            int gfx1Size = asmEntry.getOffset() - gfx1Entry.getOffset();
                             
-                            int gfx1EntryEndPosition = gfx1Entry.getOffset() + gfx1Size;
-                            byte[] gfx1PortionArray = Arrays.copyOfRange(MDTByteArray, gfx1Entry.getOffset() ,gfx1EntryEndPosition);
-                            FileUtils.writeToFile(gfx1PortionArray, f.getName(), fileExtension, ".GFX1", outputFilePath);
+                            
+                            int gfxHEntryEndPosition = gfxHEntry.getOffset() + gfxHEntry.getSize();
+                            byte[] gfxHPortionArray = Arrays.copyOfRange(MDTByteArray, gfxHEntry.getOffset() ,gfxHEntryEndPosition);
+                            FileUtils.writeToFile(gfxHPortionArray, f.getName(), fileExtension, ".GFXH", outputFilePath);
+                            
+                            int gfx4Size;
+                            int gfx4Offset;
+                            int gfx5EntryEndPosition = 0;
+                            if(!Integer.toHexString(gfx5Entry.getOffset()).equals("ffffffff")){
+                                gfx5EntryEndPosition = gfx5Entry.getOffset() + gfx5Entry.getSize();
+                                byte[] gfx5PortionArray = Arrays.copyOfRange(MDTByteArray, gfx5Entry.getOffset(), gfx5EntryEndPosition);
+                                FileUtils.writeToFile(gfx5PortionArray, f.getName(), fileExtension, ".GFX5", outputFilePath);
+                            }
+                            
+                            int gfx1EntryEndPosition = 0;
+                            if(!Integer.toHexString(gfx1Entry.getOffset()).equals("ffffffff")){
+                                gfx1EntryEndPosition = gfx1Entry.getOffset() + gfx1Entry.getSize();
+                                byte[] gfx1PortionArray = Arrays.copyOfRange(MDTByteArray, gfx1Entry.getOffset(), gfx1EntryEndPosition);
+                                FileUtils.writeToFile(gfx1PortionArray, f.getName(), fileExtension, ".GFX1", outputFilePath);
+                            } 
+                            
+                            if(!Integer.toHexString(gfx1Entry.getOffset()).equals("ffffffff")) {
+                                gfx4Size = asmEntry.getOffset() - gfx1EntryEndPosition;
+                                gfx4Offset = gfx1EntryEndPosition;
+                            } else if(!Integer.toHexString(gfx5Entry.getOffset()).equals("ffffffff")) {
+                                gfx4Size = asmEntry.getOffset() - gfx5EntryEndPosition;
+                                gfx4Offset = gfx5EntryEndPosition;
+                            }else {
+                                gfx4Size = asmEntry.getOffset() - gfxHEntryEndPosition;
+                                gfx4Offset = gfxHEntryEndPosition;
+                            }
+                                                        
+                           
+                            if(!Integer.toHexString(gfx4Offset).equals("ffffffff")){
+                                int gfx4EntryEndPosition = gfx4Offset + gfx4Size;
+                                byte[] gfx4PortionArray = Arrays.copyOfRange(MDTByteArray, gfx4Offset ,gfx4EntryEndPosition);
+                                FileUtils.writeToFile(gfx4PortionArray, f.getName(), fileExtension, ".GFX4", outputFilePath);
+                            }
                             
                             int gfx2Offset = gfx2Entry.getOffset();
                             if(!Integer.toHexString(gfx2Offset).equals("ffffffff")){
