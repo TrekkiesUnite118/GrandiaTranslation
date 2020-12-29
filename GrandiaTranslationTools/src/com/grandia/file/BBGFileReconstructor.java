@@ -85,7 +85,16 @@ public class BBGFileReconstructor {
             Map<String, File> middleFiles = new HashMap<>();
             FileUtils.populateFileMap(middleFiles, inputFilePath, ".MIDDLE");
             
-            Map<String, File> textFiles = new HashMap<>();
+            Map<String, File> textFiles = new HashMap<>();            
+            File textPortion; 
+            
+            if(headerFiles.keySet().contains("B001")) {
+                textPortion = new File(inputFilePath + "\\B001.TXTPORTION");
+            } else {
+                textPortion = new File(inputFilePath + "\\B039.TXTPORTION");
+            }
+            File textPortion108 = new File(inputFilePath + "\\B108.TXTPORTION");
+            
             FileUtils.populateFileMap(textFiles, inputFilePath, ".TXTPORTION");
             
             //For each file, we get it's remaining parts, calculate the new pointer table, and put it back together.
@@ -102,7 +111,12 @@ public class BBGFileReconstructor {
                     //Read the rest of the file pieces in.
                     byte[] cgfxBytes = Files.readAllBytes(compressedGraphics.toPath());
                     byte[] middleBytes = Files.readAllBytes(middleFiles.get(key).toPath());
-                    byte[] textBytes = Files.readAllBytes(textFiles.get(key).toPath());
+                    byte[] textBytes;
+                    if(key == "B108") {
+                        textBytes = Files.readAllBytes(textPortion108.toPath());
+                    }else {
+                        textBytes = Files.readAllBytes(textPortion.toPath());
+                    }
                     
                     //Determine the new cgfx size.
                     cgfxEntry.setSize(COMP_ORIG_SIZE);

@@ -7,9 +7,13 @@ import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Very crude and brute force Video Demuxer for Grandia.
@@ -34,10 +38,10 @@ public class VideoDemuxer {
     /// Table ends with 0x0000
     private static final String HEX_END_FRAME_DATA = "0";
     
-    //Brute force files.
-    private static String inputFile = "D:\\MOV20.MOV";
-    private static String outputAdx = "D:\\MOV20.ADX";
-    private static String outputVid = "D:\\MOV20.VID";
+    //Brute force files. 
+    private static String inputFile = "D:\\FMVDecompression\\DemuxTest\\MOV00.MOV";
+    private static String outputAdx = "D:\\FMVDecompression\\DemuxTest\\MOV00.ADX";
+    private static String outputVid = "D:\\FMVDecompression\\DemuxTest\\Frames\\";
     
     private final static char[] hexArray = "0123456789ABCDEF".toCharArray();
     
@@ -48,6 +52,8 @@ public class VideoDemuxer {
         
       //Byte array for the file.
         try {
+            List<String> numFramesSet = new ArrayList<>();
+            
             byte[] MOVByteArray = Files.readAllBytes(f.toPath());
             
             byte[] frameTableArray = Arrays.copyOfRange(MOVByteArray, FRAME_TABLE_OFFSET, DATA_START_OFFSET);
@@ -57,37 +63,49 @@ public class VideoDemuxer {
             int i = 0;
             int vidChunkSize = 0;
             int chunkNum = 0;
-            
+            int framecount = 0;
+            int framesPerRun = 0;
             Map<Integer, Integer> chunkSizeMap = new HashMap<>();
+
+            Map<Integer, Short> frameSizeMap = new HashMap<>();
             System.out.println("Reading Table...");
             while(i < frameTableArray.length) {
                 //Read 4 bytes out of the Header Array into a temporary buffer.
                 ByteBuffer bb = ByteBuffer.wrap(frameTableArray, i, 2);
                 short val = bb.getShort();
                 String hexVal = Integer.toHexString(val);
-                System.out.println(hexVal);
                 if(hexVal.equals(HEX_END_FRAME_CHUNK)) {
                     chunkSizeMap.put(chunkNum, vidChunkSize);
                     vidChunkSize = 0;
                     chunkNum++;
+                    numFramesSet.add(Integer.toString(framesPerRun));
+                    framesPerRun = 0;
                     i+=4;
                     
                 } else if(hexVal.equals(HEX_END_FRAME_DATA)) {
                     vidChunkSize = 0;
+                    numFramesSet.add(Integer.toString(framesPerRun));
+                    framesPerRun = 0;
                     break;
                 } else {
+                    frameSizeMap.put(framecount, val);
                     vidChunkSize += val;
-                    System.out.println("Chunk Size " + vidChunkSize);
                     i+=2;
+                    framecount++;
+                    framesPerRun++;
                 }
                 
             }
             System.out.println("Done Reading Table...");
-            File adxOut = new File(outputAdx);
-            File vidOut = new File(outputVid);
+            
+            int frameRate = 0;
+            for(String fps : numFramesSet) {
+                if(Integer.parseInt(fps) > frameRate) {
+                    frameRate = Integer.parseInt(fps);
+                }
+            }
             
             ByteArrayOutputStream adxBaos = new ByteArrayOutputStream();
-            ByteArrayOutputStream vidBaos = new ByteArrayOutputStream();
             
             int currPos = 0;
             
@@ -102,24 +120,49 @@ public class VideoDemuxer {
                     currPos += ADX_CHUNK_SIZE;
                 }
                 
-                byte[] vidChunk = Arrays.copyOfRange(dataArray, currPos, currPos + chunkSizeMap.get(j));
-                
                 currPos += chunkSizeMap.get(j);
                 
                 adxBaos.write(adxChunk);
-                vidBaos.write(vidChunk);
+                
+                
+            }
+            currPos = INIT_ADX_CHUNK_SIZE;
+            int frameNum = 0;
+            for(int j = 0; j < frameSizeMap.size(); j++) {
+                
+                if(frameNum == frameRate) {
+                    currPos += ADX_CHUNK_SIZE;
+                    frameNum = 0;
+                }
+                
+                byte[] vidChunk = Arrays.copyOfRange(dataArray, currPos, currPos + frameSizeMap.get(j));
+                
+                currPos += frameSizeMap.get(j);
+                
+                Path vidPath = Paths.get(outputVid + j);
+                try {
+                    Files.write(vidPath, vidChunk);
+                    
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                frameNum++;
             }
             
             Path adxPath = Paths.get(outputAdx);
-            Path vidPath = Paths.get(outputVid);
+            
             try {
                 Files.write(adxPath, adxBaos.toByteArray());
-                Files.write(vidPath, vidBaos.toByteArray());
                 
             } catch (IOException e) {
                 e.printStackTrace();
             }
             
+            System.out.println("Demuxed " + framecount + " frames @" + frameRate  + "fps.");
+            
+            int minutes = numFramesSet.size() / 60;
+            int seconds = numFramesSet.size() % 60;
+            System.out.println("Video Length is " + minutes + " minutes and " + seconds + " seconds");
             
             
         } catch (IOException e) {

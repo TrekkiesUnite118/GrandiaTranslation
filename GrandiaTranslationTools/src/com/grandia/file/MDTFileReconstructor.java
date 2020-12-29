@@ -221,7 +221,7 @@ public class MDTFileReconstructor {
                     int asmSize = asmEntry.getSize();
                     int asmSizeDiff = 0;
                     if(!Integer.toHexString(asmSize).equals("ffffffff") && asmBytes != null) {
-                        asmSizeDiff = asmBytes.length - asmEntry.getSize();
+                        asmSizeDiff = newAsmSize - asmEntry.getSize();
                         if(asmSizeDiff < 0) {
                             
                             asmSizeDiff = 0;
@@ -259,7 +259,7 @@ public class MDTFileReconstructor {
                     if(asmBytes == null) {
                         finalDataSize = headerBytes.length + preScriptBytes.length + scriptHeaderBytes.length + scriptBytes.length + graphicsBytes.length;
                     } else {
-                        finalDataSize = headerBytes.length + preScriptBytes.length + scriptHeaderBytes.length + scriptBytes.length + gfxHSize + gfx5Size + gfx1Size + gfx4Size + asmBytes.length + gfx2Size + gfx3Size;
+                        finalDataSize = headerBytes.length + preScriptBytes.length + scriptHeaderBytes.length + scriptBytes.length + gfxHSize + gfx5Size + gfx1Size + gfx4Size + newAsmSize + gfx2Size + gfx3Size;
                     }
                     //Find out how far away we are from the end of the next sector.
                     int sectorRemainder = finalDataSize % SECTOR_SIZE;
