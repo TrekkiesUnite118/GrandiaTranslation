@@ -36,10 +36,10 @@ public class VideoMuxer {
     private static final String HEX_END_FRAME_DATA = "0";
     
     //Brute force files.
-    private static String inputFile = "D:\\FMVDecompression\\DemuxTest\\MOV00.MOV";
-    private static String adxFile = "D:\\FMVDecompression\\DemuxTest\\MOV00.ADX";
+    private static String inputFile = "D:\\FMVDecompression\\DemuxTest\\MOV20.MOV";
+    private static String adxFile = "D:\\FMVDecompression\\DemuxTest\\MOV20.ADX";
     private static String outputVid = "D:\\FMVDecompression\\DemuxTest\\Frames\\";
-    private static String output = "D:\\FMVDecompression\\MuxTest\\MOV00.MOV";
+    private static String output = "D:\\FMVDecompression\\MuxTest\\MOV20.MOV";
     
     private final static char[] hexArray = "0123456789ABCDEF".toCharArray();
     
@@ -106,25 +106,52 @@ public class VideoMuxer {
             
             frameRate = frameRate * 2;
             
+            
+            
             int frameNum = 0;
             for(int frameRuns = 0; frameRuns < frameDataHeaders.size(); frameRuns++) {
-                ByteBuffer bb = ByteBuffer.allocate(4);
-                bb.putInt(frameDataHeaders.get(frameRuns));
-                frameTableBaos.write(bb.array());
-                
+
+                int frameSectorSize = 0;
+                List<byte[]> frameByteList = new ArrayList<>();
                 for(int frameCounter = 0; frameCounter < frameRate; frameCounter++) {
                     if(frameNum < frameFiles.size()) {
                         File frameFile = frameFiles.get(Integer.toString(frameNum));
                         byte[] frameBytes = Files.readAllBytes(frameFile.toPath());
+                        int remainder = frameBytes.length % 2048;
+                        int paddingsize = 0;
+                        if( remainder != 0) {
+                            paddingsize = 2048 - remainder;
+                        }
+                        
                         short frameLength = (short) frameBytes.length;
+                        frameSectorSize += frameLength + paddingsize;
                         ByteBuffer bb2 = ByteBuffer.allocate(2);
                         bb2.putShort(frameLength);
-                        frameTableBaos.write(bb2.array());
+                        
+                        frameByteList.add(bb2.array());
+                        
                         frameNum++;
                     }
                 }
                 
+                ByteBuffer bb = ByteBuffer.allocate(2);
+                ByteBuffer bb3 = ByteBuffer.allocate(2);
+                
+                bb.putShort((short) 0x000C);
+                short sectors = (short) (frameSectorSize / 2048);
+                bb3.putShort(sectors);
+                frameTableBaos.write(bb.array());
+                frameTableBaos.write(bb3.array());
+                
+                for(int j = 0; j < frameByteList.size(); j++) {
+                    frameTableBaos.write(frameByteList.get(j));
+                }
+
+                //System.out.println("Frame size: " + Integer.toHexString(frameSectorSize));
+                System.out.println("Frame Sectors: " + Integer.toHexString(frameSectorSize / 2048));
+                
             }
+
             
             byte[] frameTableByteArray = frameTableBaos.toByteArray();
             
@@ -150,11 +177,23 @@ public class VideoMuxer {
                         vidBaos.write(adxChunk);
                     }
                 }
+               
                 for(int frameCounter = 0; frameCounter < frameRate; frameCounter++) {
                     if(frameNum < frameFiles.size()) {
                         File frameFile = frameFiles.get(Integer.toString(frameNum));
                         byte[] frameBytes = Files.readAllBytes(frameFile.toPath());
+                        
+                        int remainder = frameBytes.length % 2048;
+                        int paddingsize = 0;
+                        if( remainder != 0) {
+                            paddingsize = 2048 - remainder;
+                        }
+                        
+                        byte[] paddingArray = new byte[paddingsize];
+                        
+                        
                         vidBaos.write(frameBytes);
+                        vidBaos.write(paddingArray);
                         frameNum++;
                     }
                 }

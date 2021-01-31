@@ -39,9 +39,9 @@ public class VideoDemuxer {
     private static final String HEX_END_FRAME_DATA = "0";
     
     //Brute force files. 
-    private static String inputFile = "D:\\FMVDecompression\\DemuxTest\\MOV00.MOV";
-    private static String outputAdx = "D:\\FMVDecompression\\DemuxTest\\MOV00.ADX";
-    private static String outputVid = "D:\\FMVDecompression\\DemuxTest\\Frames\\";
+    private static String inputFile = "D:\\FMVDecompression\\DemuxTest\\MOV20.MOV";
+    private static String outputAdx = "D:\\FMVDecompression\\DemuxTest\\MOV20.ADX";
+    private static String outputVid = "D:\\FMVDecompression\\DemuxTest\\Frames15\\";
     
     private final static char[] hexArray = "0123456789ABCDEF".toCharArray();
     
@@ -128,6 +128,7 @@ public class VideoDemuxer {
             }
             currPos = INIT_ADX_CHUNK_SIZE;
             int frameNum = 0;
+            List<Integer> compLvls = new ArrayList<>();
             for(int j = 0; j < frameSizeMap.size(); j++) {
                 
                 if(frameNum == frameRate) {
@@ -139,6 +140,14 @@ public class VideoDemuxer {
                 
                 currPos += frameSizeMap.get(j);
                 
+                byte[] complvl = Arrays.copyOfRange(vidChunk, 0, 2);
+               
+               
+                String compressionLevel = bytesToHex(complvl);
+                
+                compLvls.add(Integer.parseInt(compressionLevel.substring(3), 16));
+                
+                System.out.println("Frame " + frameNum + " compression Level: " + compressionLevel.charAt(3));
                 Path vidPath = Paths.get(outputVid + j);
                 try {
                     Files.write(vidPath, vidChunk);
@@ -164,7 +173,7 @@ public class VideoDemuxer {
             int seconds = numFramesSet.size() % 60;
             System.out.println("Video Length is " + minutes + " minutes and " + seconds + " seconds");
             
-            
+            System.out.println(compLvls);
         } catch (IOException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
