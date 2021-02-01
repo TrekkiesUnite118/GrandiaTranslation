@@ -2,7 +2,9 @@ package com.grandia.file;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.util.ArrayList;
@@ -10,6 +12,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -95,63 +98,63 @@ public class SHOPFileEditor {
     private static int NAMES_STRING_OFFSET = 60360;
     
     //8x16 values
-    private static String x16_BUY_VALUE = "Buy   ";
-    private static String x16_BUY_CANCEL_VALUE = "Cancel";
-    private static String x16_SELL_VALUE = "Sell  ";
-    private static String x16_SELL_CANCEL_VALUE = "Cancel";
-    private static String x16_STASH_VALUE = "Stash ";
-    private static String x16_STASH_CANCEL_VALUE = "Cancel";
-    private static String x16_GET_VALUE = "Get   ";
-    private static String x16_GET_CANCEL_VALUE = "Cancel";
-    private static String x16_EQUIP_VALUE = "Equip";
-    private static String x16_TRADE_VALUE = "Trade";
-    private static String x16_BUY2_VALUE = "Buy  ";
-    private static String x16_WILL_TRADE_VALUE =  "    Trade? ";
-    private static String x16_SPACE_VALUE = " ";
-    private static String x16_CANNOT_TRADE_VALUE = "Cannot Trade";
-    private static String x16_WELCOME_VALUE = "Welcome             ";
-    private static String x16_PICK_AN_ITEM_TO_BUY_VALUE = "Pick an item to buy";
-    private static String x16_WHO_WILL_BUY_VALUE = "Who will buy it?";
-    private static String x16_PICK_AN_ITEM_TO_SELL_VALUE = "Pick an item to sell";
-    private static String x16_BUY_WHICH_ATTRIBUTE_VALUE = "Buy which attribute?";
-    private static String x16_PICK_AN_ITEM_TO_STASH_VALUE = "Pick an item to stash";
-    private static String x16_PICK_AN_ITEM_TO_GET_VALUE = "Pick an item to get";
-    private static String x16_WHO_IS_BUYING_VALUE = "  Who is buying?";
-    private static String x16_YOU_HAVE_NO_MANA_EGGS_VALUE = "You have no Mana Eggs";
-    private static String x16_YOU_HAVE_NO_ITEMS_TO_GET_VALUE = "You have no items to get";
-    private static String x16_WAS_LEARNED_VALUE = " was learned!";
+    private static String x16_BUY_VALUE;
+    private static String x16_BUY_CANCEL_VALUE;
+    private static String x16_SELL_VALUE;
+    private static String x16_SELL_CANCEL_VALUE;
+    private static String x16_STASH_VALUE;
+    private static String x16_STASH_CANCEL_VALUE;
+    private static String x16_GET_VALUE;
+    private static String x16_GET_CANCEL_VALUE;
+    private static String x16_EQUIP_VALUE;
+    private static String x16_TRADE_VALUE;
+    private static String x16_BUY2_VALUE;
+    private static String x16_WILL_TRADE_VALUE;
+    private static String x16_SPACE_VALUE;
+    private static String x16_CANNOT_TRADE_VALUE;
+    private static String x16_WELCOME_VALUE;
+    private static String x16_PICK_AN_ITEM_TO_BUY_VALUE;
+    private static String x16_WHO_WILL_BUY_VALUE;
+    private static String x16_PICK_AN_ITEM_TO_SELL_VALUE;
+    private static String x16_BUY_WHICH_ATTRIBUTE_VALUE;
+    private static String x16_PICK_AN_ITEM_TO_STASH_VALUE;
+    private static String x16_PICK_AN_ITEM_TO_GET_VALUE;
+    private static String x16_WHO_IS_BUYING_VALUE;
+    private static String x16_YOU_HAVE_NO_MANA_EGGS_VALUE;
+    private static String x16_YOU_HAVE_NO_ITEMS_TO_GET_VALUE;
+    private static String x16_WAS_LEARNED_VALUE;
     
     //8x8 values
-    private static String TRADE_VALUE_VALUE = "val";
-    private static String MANA_EGGS_VALUE = "Mana Eggs";
-    private static String EGGS_VALUE = "Eggs";
-    private static String ATK_VALUE = "atk   ";
-    private static String DEF_VALUE = "def   ";
-    private static String ACT_VALUE = "act   ";
-    private static String MOV_VALUE = "mov   ";
-    private static String STR_VALUE = "str   ";
-    private static String VIT_VALUE = "vit   ";
-    private static String WIT_VALUE = "wit   ";
-    private static String AGI_VALUE = "agi   ";
-    private static String WEAPON_VALUE = "weapon   ";
-    private static String SHIELD_VALUE = "shield   ";
-    private static String ARMOR_VALUE =  "armor    ";
-    private static String HELMET_VALUE = "helmet   ";
-    private static String SHOES_VALUE =  "shoes    ";
-    private static String JEWELRY_VALUE = "JEWELRY  ";
-    private static String GOLD_PCS_VALUE = "GOLD PCS";
-    private static String STR_VALUE_2 = "str";
-    private static String WIT_VALUE_2 = "wit";
-    private static String AGI_VALUE_2 = "agi";
-    private static String MAGIC_VALUE = "element";
-    private static String LV_UP_PARAM_VALUE = "LV UP PARAM";
-    private static String MIX_ATTRIBUTE_VALUE = "mix element";
-    private static String THUNDER_VALUE = "bolt ";
-    private static String SNOW_VALUE = "ice ";
-    private static String FOREST_VALUE = "woods";
-    private static String EXPLOSION_VALUE = "bomb";
+    private static String TRADE_VALUE_VALUE;
+    private static String MANA_EGGS_VALUE;
+    private static String EGGS_VALUE;
+    private static String ATK_VALUE;
+    private static String DEF_VALUE;
+    private static String ACT_VALUE;
+    private static String MOV_VALUE;
+    private static String STR_VALUE;
+    private static String VIT_VALUE;
+    private static String WIT_VALUE;
+    private static String AGI_VALUE;
+    private static String WEAPON_VALUE;
+    private static String SHIELD_VALUE;
+    private static String ARMOR_VALUE;
+    private static String HELMET_VALUE;
+    private static String SHOES_VALUE;
+    private static String JEWELRY_VALUE;
+    private static String GOLD_PCS_VALUE;
+    private static String STR_VALUE_2;
+    private static String WIT_VALUE_2;
+    private static String AGI_VALUE_2;
+    private static String MAGIC_VALUE;
+    private static String LV_UP_PARAM_VALUE;
+    private static String MIX_ATTRIBUTE_VALUE;
+    private static String THUNDER_VALUE;
+    private static String SNOW_VALUE;
+    private static String FOREST_VALUE;
+    private static String EXPLOSION_VALUE;
     
-    private static String NAMES_STRING_VALUE = "Justin Feena Sue Gadwin Rapp Milda Guido Liete   ";
+    private static String NAMES_STRING_VALUE;
     private static int NUM_OF_NAMES = 8;
     private static byte[] shopBytes;
     
@@ -162,6 +165,7 @@ public class SHOPFileEditor {
     private Map<String, String> fieldToNewValueMap;
     private Map<String, byte[]> fieldToValueMap;
     private Map<Integer, Integer> fileOffsetToMemOffsetValuesMap;
+    private static Properties properties;
     
     public SHOPFileEditor inputFilePath(String inputFilePath) {
         this.inputFilePath = inputFilePath;
@@ -174,6 +178,16 @@ public class SHOPFileEditor {
     }
     
     public void init() {
+        try {
+            InputStream in = new FileInputStream("translation.properties");
+            properties = new Properties();
+            properties.load(in);
+            updateReplacementValues();
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        
         parse();
         populateFieldToOffsetMap();
         populateFieldToValueMap();
@@ -188,7 +202,6 @@ public class SHOPFileEditor {
     public void autoReplace() {
         for(int i = 0; i < orderToFieldNameMap.size(); i++) {
             String key = orderToFieldNameMap.get(i);
-            System.out.println("Replacing value for " + key);
             replaceFieldValue(key, fieldToNewValueMap.get(key));
         }
     }
@@ -232,14 +245,15 @@ public class SHOPFileEditor {
       
         int delta = newValue.length - oldValue.length;
         
-        //Determin the anchor point and update the offsets.
+        //Determine the anchor point and update the offsets.
+        int anchorOffset = fieldToOffsetMap.get(key) + MEM_OFFSET_START;
         if(delta != 0) {
-            int anchorOffset = fieldToOffsetMap.get(key) + MEM_OFFSET_START;
             updateOffsets(delta, anchorOffset);
         }
         
         //Update byte array with new value.
         updateShopByteArray(fieldToOffsetMap.get(key), oldValue, newValue);
+        List<Integer> offsetsToRemove = new ArrayList<>();
         
         //Update byte array with new offset values.
         for(Integer fileOffset : fileOffsetToMemOffsetValuesMap.keySet()) {
@@ -249,6 +263,14 @@ public class SHOPFileEditor {
             byte[] memOffsetByte = DatatypeConverter.parseHexBinary(hexMemOffset);
             
             updateShopByteArray(fileOffset, memOffsetByte, memOffsetByte);
+                        
+            if(memOffset < anchorOffset) {
+                offsetsToRemove.add(fileOffset);
+            }
+        }
+        
+        for(int remove : offsetsToRemove) {
+            fileOffsetToMemOffsetValuesMap.remove(remove);
         }
         
         //Update fieldToValueMap.
@@ -491,6 +513,9 @@ public class SHOPFileEditor {
        }
     }
     
+    /**
+     * Scans the file for HWRAM offsets that so we can update them.
+     */
     private void populateFileOffsetToMemOffsetValuesMap() {
         fileOffsetToMemOffsetValuesMap = new HashMap<>();
         int length = shopBytes.length;
@@ -503,7 +528,6 @@ public class SHOPFileEditor {
             
             String hexString = String.format("%08X", value).toUpperCase();
             if(hexString.startsWith(HEX_MATCH_PATTERN_B) || hexString.startsWith(HEX_MATCH_PATTERN_C)) {
-                System.out.println(hexString);
                 fileOffsetToMemOffsetValuesMap.put(i, value);
             }
             i+=4;
@@ -526,6 +550,12 @@ public class SHOPFileEditor {
         }
     }
     
+    /**
+     * Reads the value at the passed in offset.
+     * 
+     * @param offset
+     * @return
+     */
     private byte[] readValueFromFileBytes(int offset) {
         byte[] buffer = new byte[1];
         
@@ -546,6 +576,11 @@ public class SHOPFileEditor {
         return value;
     }
     
+    /**
+     * Names are stored at one offset but are a delimited list.
+     * @param offset
+     * @return
+     */
     private byte[] readNamesValueFromFileBytes(int offset) {
         byte[] buffer = new byte[1];
         
@@ -569,6 +604,12 @@ public class SHOPFileEditor {
         return value;
     }
     
+    /**
+     * Updates the offsets that are after the anchor offset by the delta value.
+     * 
+     * @param delta
+     * @param anchorOffset
+     */
     private void updateOffsets(int delta, int anchorOffset) {
         int fileAnchorOffset = anchorOffset - MEM_OFFSET_START;
         List<Integer> keys = new ArrayList<>();
@@ -604,5 +645,66 @@ public class SHOPFileEditor {
             hexChars[j * 2 + 1] = hexArray[v & 0x0F];
         }
         return new String(hexChars);
+    }
+    
+    private static void updateReplacementValues() {
+        //8x16 values
+        x16_BUY_VALUE = properties.getProperty("shop.8x16.BUY_VALUE").replace("\"", "");
+        x16_BUY_CANCEL_VALUE = properties.getProperty("shop.8x16.BUY_CANCEL_VALUE").replace("\"", "");
+        x16_SELL_VALUE = properties.getProperty("shop.8x16.SELL_VALUE").replace("\"", "");
+        x16_SELL_CANCEL_VALUE = properties.getProperty("shop.8x16.SELL_CANCEL_VALUE").replace("\"", "");
+        x16_STASH_VALUE = properties.getProperty("shop.8x16.STASH_VALUE").replace("\"", "");
+        x16_STASH_CANCEL_VALUE = properties.getProperty("shop.8x16.STASH_CANCEL_VALUE").replace("\"", "");
+        x16_GET_VALUE = properties.getProperty("shop.8x16.GET_VALUE").replace("\"", "");
+        x16_GET_CANCEL_VALUE = properties.getProperty("shop.8x16.GET_CANCEL_VALUE").replace("\"", "");
+        x16_EQUIP_VALUE = properties.getProperty("shop.8x16.EQUIP_VALUE").replace("\"", "");
+        x16_TRADE_VALUE = properties.getProperty("shop.8x16.TRADE_VALUE").replace("\"", "");
+        x16_BUY2_VALUE = properties.getProperty("shop.8x16.BUY2_VALUE").replace("\"", "");
+        x16_WILL_TRADE_VALUE = properties.getProperty("shop.8x16.WILL_TRADE_VALUE").replace("\"", "");
+        x16_SPACE_VALUE = properties.getProperty("shop.8x16.SPACE_VALUE").replace("\"", "");
+        x16_CANNOT_TRADE_VALUE = properties.getProperty("shop.8x16.CANNOT_TRADE_VALUE").replace("\"", "");
+        x16_WELCOME_VALUE = properties.getProperty("shop.8x16.WELCOME_VALUE").replace("\"", "");
+        x16_PICK_AN_ITEM_TO_BUY_VALUE = properties.getProperty("shop.8x16.PICK_AN_ITEM_TO_BUY_VALUE").replace("\"", "");
+        x16_WHO_WILL_BUY_VALUE = properties.getProperty("shop.8x16.WHO_WILL_BUY_VALUE").replace("\"", "");
+        x16_PICK_AN_ITEM_TO_SELL_VALUE = properties.getProperty("shop.8x16.PICK_AN_ITEM_TO_SELL_VALUE").replace("\"", "");
+        x16_BUY_WHICH_ATTRIBUTE_VALUE = properties.getProperty("shop.8x16.BUY_WHICH_ATTRIBUTE_VALUE").replace("\"", "");
+        x16_PICK_AN_ITEM_TO_STASH_VALUE = properties.getProperty("shop.8x16.PICK_AN_ITEM_TO_STASH_VALUE").replace("\"", "");
+        x16_PICK_AN_ITEM_TO_GET_VALUE = properties.getProperty("shop.8x16.PICK_AN_ITEM_TO_GET_VALUE").replace("\"", "");
+        x16_WHO_IS_BUYING_VALUE = properties.getProperty("shop.8x16.WHO_IS_BUYING_VALUE").replace("\"", "");
+        x16_YOU_HAVE_NO_MANA_EGGS_VALUE = properties.getProperty("shop.8x16.YOU_HAVE_NO_MANA_EGGS_VALUE").replace("\"", "");
+        x16_YOU_HAVE_NO_ITEMS_TO_GET_VALUE = properties.getProperty("shop.8x16.YOU_HAVE_NO_ITEMS_TO_GET_VALUE").replace("\"", "");
+        x16_WAS_LEARNED_VALUE = properties.getProperty("shop.8x16.WAS_LEARNED_VALUE").replace("\"", "");
+        
+        //8x8 values
+        TRADE_VALUE_VALUE = properties.getProperty("shop.8x8.TRADE_VALUE_VALUE").replace("\"", "");
+        MANA_EGGS_VALUE = properties.getProperty("shop.8x8.MANA_EGGS_VALUE").replace("\"", "");
+        EGGS_VALUE = properties.getProperty("shop.8x8.EGGS_VALUE").replace("\"", "");
+        ATK_VALUE = properties.getProperty("shop.8x8.ATK_VALUE").replace("\"", "");
+        DEF_VALUE = properties.getProperty("shop.8x8.DEF_VALUE").replace("\"", "");
+        ACT_VALUE = properties.getProperty("shop.8x8.ACT_VALUE").replace("\"", "");
+        MOV_VALUE = properties.getProperty("shop.8x8.MOV_VALUE").replace("\"", "");
+        STR_VALUE = properties.getProperty("shop.8x8.STR_VALUE").replace("\"", "");
+        VIT_VALUE = properties.getProperty("shop.8x8.VIT_VALUE").replace("\"", "");
+        WIT_VALUE = properties.getProperty("shop.8x8.WIT_VALUE").replace("\"", "");
+        AGI_VALUE = properties.getProperty("shop.8x8.AGI_VALUE").replace("\"", "");
+        WEAPON_VALUE = properties.getProperty("shop.8x8.WEAPON_VALUE").replace("\"", "");
+        SHIELD_VALUE = properties.getProperty("shop.8x8.SHIELD_VALUE").replace("\"", "");
+        ARMOR_VALUE =  properties.getProperty("shop.8x8.ARMOR_VALUE").replace("\"", "");
+        HELMET_VALUE = properties.getProperty("shop.8x8.HELMET_VALUE").replace("\"", "");
+        SHOES_VALUE =  properties.getProperty("shop.8x8.SHOES_VALUE").replace("\"", "");
+        JEWELRY_VALUE = properties.getProperty("shop.8x8.JEWELRY_VALUE").replace("\"", "");
+        GOLD_PCS_VALUE = properties.getProperty("shop.8x8.GOLD_PCS_VALUE").replace("\"", "");
+        STR_VALUE_2 = properties.getProperty("shop.8x8.STR_VALUE_2").replace("\"", "");
+        WIT_VALUE_2 = properties.getProperty("shop.8x8.WIT_VALUE_2").replace("\"", "");
+        AGI_VALUE_2 = properties.getProperty("shop.8x8.AGI_VALUE_2").replace("\"", "");
+        MAGIC_VALUE = properties.getProperty("shop.8x8.MAGIC_VALUE").replace("\"", "");
+        LV_UP_PARAM_VALUE = properties.getProperty("shop.8x8.LV_UP_PARAM_VALUE").replace("\"", "");
+        MIX_ATTRIBUTE_VALUE = properties.getProperty("shop.8x8.MIX_ATTRIBUTE_VALUE").replace("\"", "");
+        THUNDER_VALUE = properties.getProperty("shop.8x8.THUNDER_VALUE").replace("\"", "");
+        SNOW_VALUE = properties.getProperty("shop.8x8.SNOW_VALUE").replace("\"", "");
+        FOREST_VALUE = properties.getProperty("shop.8x8.FOREST_VALUE").replace("\"", "");
+        EXPLOSION_VALUE = properties.getProperty("shop.8x8.EXPLOSION_VALUE").replace("\"", "");
+        
+        NAMES_STRING_VALUE = properties.getProperty("shop.NAMES_STRING_VALUE").replace("\"", "");
     }
 }

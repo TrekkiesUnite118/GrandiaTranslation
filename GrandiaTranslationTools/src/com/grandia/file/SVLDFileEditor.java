@@ -2,7 +2,9 @@ package com.grandia.file;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.util.ArrayList;
@@ -10,6 +12,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -61,16 +64,44 @@ public class SVLDFileEditor {
     private static int OVERWRITE_SLASH_STRING_OFFSET = 45587;
     private static int OVERWRITE_NO_STRING_OFFSET = 45590;
     private static int NAMES_STRING_OFFSET = 46824;
-
     
+    private static String TIME_STRING;
+    private static String LOAD_STRING;
+    private static String SAVE_STRING;
+    private static String SYSTEM_RAM_STRING;
+    private static String CARTRIDGE_RAM_STRING;
+    private static String CARTRIDGE_RAM_STRING_2;
+    private static String NOT_INITIALIZED;
+    private static String NO_SAVE_DATA;
+    private static String AREA;
+    private static String SELECT_A_SAVE_FILE_1_VALUE;
+    private static String SELECT_A_SAVE_FILE_2_VALUE;
+    private static String CANNOT_CANCEL;
+    private static String INSUFFICIENT_MEMORY;
+    private static String DATA_CANNOT_BE_USED;
+    private static String WRONG_DISC_NUMBER;
+    private static String CORRUPT_DATA;
+    private static String LOAD_CONFIRM_STRING;
+    private static String LOAD_YES_STRING;
+    private static String LOAD_SLASH_STRING;
+    private static String LOAD_NO_STRING;
+    private static String OVERWRITE_STRING;
+    private static String OVERWRITE_YES_STRING;
+    private static String OVERWRITE_SLASH_STRING;
+    private static String OVERWRITE_NO_STRING;
+    private static String NAMES_STRING;
+        
     private static int NUM_OF_NAMES = 8;
     private static byte[] svldBytes;
     
     private String inputFilePath;
     private String outputFilePath;
     private Map<String, Integer> fieldToOffsetMap;
+    private Map<Integer, String> orderToFieldNameMap;
+    private Map<String, String> fieldToNewValueMap;
     private Map<String, byte[]> fieldToValueMap;
     private Map<Integer, Integer> fileOffsetToMemOffsetValuesMap;
+    private static Properties properties;
     
     /**
      * 
@@ -93,10 +124,33 @@ public class SVLDFileEditor {
     }
     
     public void init() {
+        
+       
+        try {
+            InputStream in = new FileInputStream("translation.properties");
+            properties = new Properties();
+            properties.load(in);
+            updateReplacementValues();
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
         parse();
         populateFieldToOffsetMap();
         populateFieldToValueMap();
         populateFileOffsetToMemOffsetValuesMap();
+        populateFieldToNewValueMap();
+        populateOrderToFieldNameMap();
+    }
+    
+    /**
+     * Auto replace method. This will iterate through the preset values and auto replace them.
+     */
+    public void autoReplace() {
+        for(int i = 0; i < orderToFieldNameMap.size(); i++) {
+            String key = orderToFieldNameMap.get(i);
+            replaceFieldValue(key, fieldToNewValueMap.get(key));
+        }
     }
     
     /**
@@ -129,13 +183,14 @@ public class SVLDFileEditor {
         int delta = newValue.length - oldValue.length;
         
         //Determine the anchor point and call update Offsets if the size changed.
+        int anchorOffset = fieldToOffsetMap.get(key) + MEM_OFFSET_START;
         if(delta != 0) {
-            int anchorOffset = fieldToOffsetMap.get(key) + MEM_OFFSET_START;
             updateOffsets(delta, anchorOffset);
         }
         
         //Update the value in the byte array.
         updateSvldByteArray(fieldToOffsetMap.get(key), oldValue, newValue);
+        List<Integer> offsetsToRemove = new ArrayList<>();
         
         //Update the offset values in the byte array.
         for(Integer fileOffset : fileOffsetToMemOffsetValuesMap.keySet()) {
@@ -145,6 +200,14 @@ public class SVLDFileEditor {
             byte[] memOffsetByte = DatatypeConverter.parseHexBinary(hexMemOffset);
             
             updateSvldByteArray(fileOffset, memOffsetByte, memOffsetByte);
+            
+            if(memOffset < anchorOffset) {
+                offsetsToRemove.add(fileOffset);
+            }
+        }
+        
+        for(int remove : offsetsToRemove) {
+            fileOffsetToMemOffsetValuesMap.remove(remove);
         }
         
         //Update the fieldToValue Map.
@@ -211,6 +274,71 @@ public class SVLDFileEditor {
         fieldToOffsetMap.put("NAMES", NAMES_STRING_OFFSET);
     }
     
+    private void populateFieldToNewValueMap() {
+        fieldToNewValueMap = new HashMap<>();
+        
+        fieldToNewValueMap.put("TIME", TIME_STRING);
+        fieldToNewValueMap.put("LOAD", LOAD_STRING);
+        fieldToNewValueMap.put("SAVE", SAVE_STRING);
+        fieldToNewValueMap.put("SYSTEM RAM", SYSTEM_RAM_STRING);
+        fieldToNewValueMap.put("BACKUP RAM", CARTRIDGE_RAM_STRING);
+        fieldToNewValueMap.put("BACKUP RAM NOT FOUND", CARTRIDGE_RAM_STRING_2);
+        fieldToNewValueMap.put("NOT INITIALIZED", NOT_INITIALIZED);
+        fieldToNewValueMap.put("NO SAVE DATA", NO_SAVE_DATA);
+        fieldToNewValueMap.put("AREA", AREA);
+        fieldToNewValueMap.put("SELECT A SAVE FILE", SELECT_A_SAVE_FILE_1_VALUE);
+        fieldToNewValueMap.put("SELECT A SAVE FILE 2", SELECT_A_SAVE_FILE_2_VALUE);
+        fieldToNewValueMap.put("CANNOT CANCEL (?)", CANNOT_CANCEL);
+        fieldToNewValueMap.put("INSUFFICIENT MEMORY", INSUFFICIENT_MEMORY);
+        fieldToNewValueMap.put("THIS DATA CANNOT BE USED", DATA_CANNOT_BE_USED);
+        fieldToNewValueMap.put("WRONG DISC NUMBER", WRONG_DISC_NUMBER);
+        fieldToNewValueMap.put("DATA IS CORRUPT", CORRUPT_DATA);
+        fieldToNewValueMap.put("LOAD?", LOAD_CONFIRM_STRING);
+        fieldToNewValueMap.put("LOAD YES", LOAD_YES_STRING);
+        fieldToNewValueMap.put("LOAD /", LOAD_SLASH_STRING);
+        fieldToNewValueMap.put("LOAD NO", LOAD_NO_STRING);
+        fieldToNewValueMap.put("OVERWRITE", OVERWRITE_STRING);
+        fieldToNewValueMap.put("OVERWRITE YES", OVERWRITE_YES_STRING);
+        fieldToNewValueMap.put("OVERWRITE /", OVERWRITE_SLASH_STRING);
+        fieldToNewValueMap.put("OVERWRITE NO", OVERWRITE_NO_STRING);
+        fieldToNewValueMap.put("NAMES", NAMES_STRING);
+        
+    }
+    
+    /**
+     * This map is needed for Auto-Updating. IF the offsets are updated out of order, incorrect values can be put in for HWRAM offsets.
+     */
+    private void populateOrderToFieldNameMap() {
+        orderToFieldNameMap = new HashMap<>();
+        
+        orderToFieldNameMap.put(0, "TIME");
+        orderToFieldNameMap.put(1, "LOAD");
+        orderToFieldNameMap.put(2, "SAVE");
+        orderToFieldNameMap.put(3, "SYSTEM RAM");
+        orderToFieldNameMap.put(4, "BACKUP RAM");
+        orderToFieldNameMap.put(5, "BACKUP RAM NOT FOUND");
+        orderToFieldNameMap.put(6, "NOT INITIALIZED");
+        orderToFieldNameMap.put(7, "NO SAVE DATA");
+        orderToFieldNameMap.put(8, "AREA");
+        orderToFieldNameMap.put(9, "SELECT A SAVE FILE");
+        orderToFieldNameMap.put(10, "SELECT A SAVE FILE 2");
+        orderToFieldNameMap.put(11, "CANNOT CANCEL (?)");
+        orderToFieldNameMap.put(12, "INSUFFICIENT MEMORY");
+        orderToFieldNameMap.put(13, "THIS DATA CANNOT BE USED");
+        orderToFieldNameMap.put(14, "WRONG DISC NUMBER");
+        orderToFieldNameMap.put(15, "DATA IS CORRUPT");
+        orderToFieldNameMap.put(16, "LOAD?");
+        orderToFieldNameMap.put(17, "LOAD YES");
+        orderToFieldNameMap.put(18, "LOAD /");
+        orderToFieldNameMap.put(19, "LOAD NO");
+        orderToFieldNameMap.put(20, "OVERWRITE");
+        orderToFieldNameMap.put(21, "OVERWRITE YES");
+        orderToFieldNameMap.put(22, "OVERWRITE /");
+        orderToFieldNameMap.put(23, "OVERWRITE NO");
+        orderToFieldNameMap.put(24, "NAMES");
+    
+    }
+    
     private void populateFieldToValueMap() {
        fieldToValueMap = new HashMap<>();
        for(String key : fieldToOffsetMap.keySet()) {
@@ -241,7 +369,6 @@ public class SVLDFileEditor {
             
             String hexString = String.format("%08X", value).toUpperCase();
             if(hexString.startsWith(HEX_MATCH_PATTERN_B) || hexString.startsWith(HEX_MATCH_PATTERN_C)) {
-                System.out.println(hexString);
                 fileOffsetToMemOffsetValuesMap.put(i, value);
             }
             i+=4;
@@ -257,7 +384,6 @@ public class SVLDFileEditor {
             File svld = new File(inputFilePath);
             try {
                 svld.setReadable(true);
-                System.out.println("Is " + svld.getAbsolutePath() + " Readable? " + svld.canRead());
                 svldBytes = Files.readAllBytes(svld.toPath());
             } catch (IOException e) {
                 log.log(Level.SEVERE, "Caught IOException attempting to read bytes.", e);
@@ -351,6 +477,35 @@ public class SVLDFileEditor {
                 fieldToOffsetMap.put(key, fileOffset);
             }
         }
+    }
+    
+    private static void updateReplacementValues() {
+        TIME_STRING = properties.getProperty("save.TIME_VALUE").replace("\"", "");
+        LOAD_STRING = properties.getProperty("save.LOAD_VALUE").replace("\"", "");
+        SAVE_STRING = properties.getProperty("save.SAVE_VALUE").replace("\"", "");
+        SYSTEM_RAM_STRING = properties.getProperty("save.SYSTEM_RAM_VALUE").replace("\"", "");
+        CARTRIDGE_RAM_STRING = properties.getProperty("save.BACKUP_RAM_VALUE").replace("\"", "");
+        CARTRIDGE_RAM_STRING_2 = properties.getProperty("save.NO_CART_PRESENT_VALUE").replace("\"", "");
+        NOT_INITIALIZED = properties.getProperty("save.NOT_INITIALIZED_VALUE").replace("\"", "");
+        NO_SAVE_DATA = properties.getProperty("save.NO_GAME_DATA_VALUE").replace("\"", "");
+        AREA = properties.getProperty("save.AREA_VALUE").replace("\"", "");
+        SELECT_A_SAVE_FILE_1_VALUE = properties.getProperty("save.SELECT_SAVE_FILE_VALUE").replace("\"", "");
+        SELECT_A_SAVE_FILE_2_VALUE = properties.getProperty("save.SELECT_SAVE_FILE_2_VALUE").replace("\"", "");
+        CANNOT_CANCEL = properties.getProperty("save.CANNOT_CANCEL_VALUE").replace("\"", "");
+        INSUFFICIENT_MEMORY = properties.getProperty("save.NOT_ENOUGH_SPACE_VALUE").replace("\"", "");
+        DATA_CANNOT_BE_USED = properties.getProperty("save.FILE_CANT_BE_USED_VALUE").replace("\"", "");
+        WRONG_DISC_NUMBER = properties.getProperty("save.WRONG_DISC_VALUE").replace("\"", "");
+        CORRUPT_DATA = properties.getProperty("save.DATA_CORRUPT_VALUE").replace("\"", "");
+        LOAD_CONFIRM_STRING = properties.getProperty("save.LOAD_FILE_VALUE").replace("\"", "");
+        LOAD_YES_STRING = properties.getProperty("save.YES_VALUE").replace("\"", "");
+        LOAD_SLASH_STRING = properties.getProperty("save.BACKSLASH").replace("\"", "");
+        LOAD_NO_STRING = properties.getProperty("save.NO_VALUE").replace("\"", "");
+        OVERWRITE_STRING = properties.getProperty("save.OVERWRITE_VALUE").replace("\"", "");
+        OVERWRITE_YES_STRING = properties.getProperty("save.YES_VALUE").replace("\"", "");
+        OVERWRITE_SLASH_STRING = properties.getProperty("save.BACKSLASH").replace("\"", "");
+        OVERWRITE_NO_STRING = properties.getProperty("save.NO_VALUE").replace("\"", "");
+        NAMES_STRING = properties.getProperty("save.NAMES_STRING_VALUE").replace("\"", "");
+        
     }
     
     private static String bytesToHex(byte[] bytes) {

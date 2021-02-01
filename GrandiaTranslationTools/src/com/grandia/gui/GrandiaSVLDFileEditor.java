@@ -206,9 +206,23 @@ public class GrandiaSVLDFileEditor {
             }
         });
         
+        JButton btnAutoReplace = new JButton("Auto Replace");
+        btnAutoReplace.setFont(new Font("Arial", Font.BOLD, 16));
+        btnAutoReplace.setBounds(10, 233, 276, 51);
+        frame.getContentPane().add(btnAutoReplace);
+        
+        btnAutoReplace.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                System.out.println("Attempting to auto replace values...");
+                btnAutoReplace.setEnabled(false);
+                editor.autoReplace();
+                btnAutoReplace.setEnabled(true);
+            }
+        });
+        
         JButton save = new JButton("Save Changes");
         save.setFont(new Font("Arial", Font.BOLD, 16));
-        save.setBounds(20, 233, 613, 51);
+        save.setBounds(357, 233, 276, 51);
         frame.getContentPane().add(save);
         
         save.addActionListener(new ActionListener() {
