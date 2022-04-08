@@ -5,7 +5,9 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -27,11 +29,13 @@ public class ScriptParser {
     
     private String inputScriptFilePath;
     private String inputScriptHeaderFilePath;
-    private String outputFilePath;
+    private String outputFilePath = null;
     
     private static final Logger log = Logger.getLogger(ScriptParser.class.getName());
     
     private ScriptPointerTable pointerTable = new ScriptPointerTable();
+    
+    private Map<String, byte[]> scriptPiecesMap = new HashMap<>();
     
     public ScriptParser inputScriptFilePath(String inputScriptFilePath) {
         this.inputScriptFilePath = inputScriptFilePath;
@@ -82,7 +86,11 @@ public class ScriptParser {
                                 pte.setSize(scriptByteArray.length - pte.getOffset());
                             }
                             byte[] scriptPieceArray = Arrays.copyOfRange(scriptByteArray, pte.getOffset(), pte.getOffset() + pte.getSize());
-                            FileUtils.writeToFile(scriptPieceArray, pte.getStringId(), outputFilePath + "\\");
+                            scriptPiecesMap.put(pte.getStringId(), scriptPieceArray);
+                            
+                            if(outputFilePath != null) {
+                                FileUtils.writeToFile(scriptPieceArray, pte.getStringId(), outputFilePath + "\\");
+                            }
                         }
                     }
                 }
@@ -97,8 +105,49 @@ public class ScriptParser {
         }
     }
     
+    
+    
     @SuppressWarnings("unused")
     private void printPointerTable() {
         System.out.println(pointerTable.toString());
     }
+
+    /**
+     * The getter for scriptPiecesMap.
+     *
+     * @return the scriptPiecesMap.
+     */
+    public Map<String, byte[]> getScriptPiecesMap() {
+        return scriptPiecesMap;
+    }
+
+    /**
+     * The setter for scriptPiecesMap.
+     *
+     * @param scriptPiecesMap the scriptPiecesMap to set.
+     */
+    public void setScriptPiecesMap(Map<String, byte[]> scriptPiecesMap) {
+        this.scriptPiecesMap = scriptPiecesMap;
+    }
+
+    /**
+     * The getter for pointerTable.
+     *
+     * @return the pointerTable.
+     */
+    public ScriptPointerTable getPointerTable() {
+        return pointerTable;
+    }
+
+    /**
+     * The setter for pointerTable.
+     *
+     * @param pointerTable the pointerTable to set.
+     */
+    public void setPointerTable(ScriptPointerTable pointerTable) {
+        this.pointerTable = pointerTable;
+    }
+    
+    
+    
 }

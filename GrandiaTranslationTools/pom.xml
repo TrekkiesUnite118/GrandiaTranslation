@@ -1,0 +1,89 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>GrandiaTranslationTools</groupId>
+  <artifactId>GrandiaTranslationTools</artifactId>
+  <version>0.0.1-SNAPSHOT</version>
+  <name>Grandia Translation Tools</name>
+  <description>Tools for Translating Grandia</description>
+  <build>
+    <sourceDirectory>src</sourceDirectory>
+    <resources>
+      <resource>
+        <directory>src</directory>
+        <excludes>
+          <exclude>**/*.java</exclude>
+        </excludes>
+      </resource>
+    </resources>
+    <plugins>
+    <plugin>
+        <groupId>com.jolira</groupId>
+	    <artifactId>onejar-maven-plugin</artifactId>
+	    <version>1.4.4</version>
+	    <executions>
+	      <execution>
+	        <id>build-first</id>
+	          <configuration>
+	            <mainClass>com.grandia.gui.ScriptEditor</mainClass>
+	            <attachToBuild>true</attachToBuild>
+	            <classifier>onejar</classifier>
+	            <filename>ScriptEditor.jar</filename>
+	          </configuration>
+	          <goals>
+	            <goal>one-jar</goal>
+	          </goals>
+	        </execution>
+	      <execution>
+	        <id>build-second</id>
+	          <configuration>
+	            <mainClass>com.grandia.gui.GrandiaMDTFileParser</mainClass>
+	            <attachToBuild>true</attachToBuild>
+	            <classifier>onejar</classifier>
+	            <filename>GrandiaMDTFileParser.jar</filename>
+	          </configuration>
+	          <goals>
+	            <goal>one-jar</goal>
+	          </goals>
+	        </execution>
+	      </executions>
+    </plugin>
+    <plugin>
+    <groupId>org.apache.maven.plugins</groupId>
+    <artifactId>maven-compiler-plugin</artifactId>
+    <version>3.1</version>
+    <configuration>
+        <source>1.8</source>
+        <target>1.8</target>
+    </configuration>
+</plugin>
+    
+</plugins>
+    
+  </build>
+  <dependencies>
+    <!-- https://repo1.maven.org/maven2/com/fasterxml/jackson/core/jackson-core/2.13.1/jackson-core-2.13.1.jar -->
+    <dependency>
+        <groupId>com.fasterxml.jackson.core</groupId>
+        <artifactId>jackson-core</artifactId>
+        <version>2.13.1</version>
+    </dependency>
+    <!-- https://repo1.maven.org/maven2/com/fasterxml/jackson/core/jackson-annotations/2.13.1/jackson-annotations-2.13.1.jar -->
+    <dependency>
+        <groupId>com.fasterxml.jackson.core</groupId>
+        <artifactId>jackson-annotations</artifactId>
+        <version>2.13.1</version>
+    </dependency>
+    <!-- https://repo1.maven.org/maven2/com/fasterxml/jackson/core/jackson-databind/2.13.1/jackson-databind-2.13.1.jar -->
+    <dependency>
+        <groupId>com.fasterxml.jackson.core</groupId>
+        <artifactId>jackson-databind</artifactId>
+        <version>2.13.1</version>
+    </dependency>
+    
+    <dependency>
+    <groupId>com.jolira</groupId>
+    <artifactId>onejar-maven-plugin</artifactId>
+    <version>1.4.4</version>
+</dependency>
+</dependencies>
+</project>

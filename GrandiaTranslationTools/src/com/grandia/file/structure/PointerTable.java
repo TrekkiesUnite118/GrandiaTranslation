@@ -7,6 +7,8 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 /**
  * 
  * PointerTable class
@@ -26,6 +28,7 @@ public class PointerTable {
         pointerTable.put(pte.getTableOffset(), pte);
     }
     
+    @JsonIgnore
     public PointerTableEntry getPointerTableEntry(Integer key) {
         return pointerTable.get(key);
     }

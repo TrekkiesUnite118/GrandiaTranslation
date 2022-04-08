@@ -248,12 +248,12 @@ public class MDTFileParser {
                         //Get the Script Header portion of the file and write it to the ScriptHeader file.
                         int scriptHeaderEndPosition = scriptHeaderEntry.getOffset() + scriptHeaderEntry.getSize();
                         byte[] scriptHeaderPortionArray = Arrays.copyOfRange(MDTByteArray, scriptHeaderEntry.getOffset() ,scriptHeaderEndPosition);
-                        FileUtils.writeToFile(scriptHeaderPortionArray, f.getName(), fileExtension, ".SCRIPTHEADER", outputFilePath);
+                        FileUtils.writeToFile(scriptHeaderPortionArray, f.getName(), fileExtension, ".OFS", outputFilePath);
                         
                         //Get the Script portion of the file and write it to the Script file.
                         int scriptEndPosition = scriptEntry.getOffset() + scriptEntry.getSize();
                         byte[] scriptArray = Arrays.copyOfRange(MDTByteArray, scriptEntry.getOffset(), scriptEndPosition);
-                        FileUtils.writeToFile(scriptArray, f.getName(), fileExtension, ".SCRIPT", outputFilePath);
+                        FileUtils.writeToFile(scriptArray, f.getName(), fileExtension, ".SCN", outputFilePath);
                         
                         //Get the Graphics portion of the file and write it to the Graphics file.
                         byte[] graphicsArray = Arrays.copyOfRange(MDTByteArray, scriptEndPosition, endOfDataEntry.getSize());

@@ -249,17 +249,17 @@ public class GrandiaMDTFileParser {
                 ScriptByteSwapper scriptByteSwapper = new ScriptByteSwapper()
                         .inputFilePath(convertInputFileDirField.getText())
                         .outputFilePath(convertOutputFileDirField.getText() + "\\")
-                        .fileExtension(".SCRIPT");
+                        .fileExtension(".SCN");
                 
                 ScriptByteSwapper scriptHeaderByteSwapper = new ScriptByteSwapper()
                         .inputFilePath(convertInputFileDirField.getText())
                         .outputFilePath(convertOutputFileDirField.getText() + "\\")
-                        .fileExtension(".SCRIPTHEADER");
+                        .fileExtension(".OFS");
                 
                 ScriptByteSwapper scriptTextByteSwapper = new ScriptByteSwapper()
                         .inputFilePath(convertOutputFileDirField.getText())
                         .outputFilePath(convertOutputFileDirField.getText() + "\\")
-                        .fileExtension(".SCRIPT");
+                        .fileExtension(".SCN");
                 
                 convertButton.setEnabled(false);
                 System.out.println("Attempting to byte swap script files...");

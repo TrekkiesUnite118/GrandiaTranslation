@@ -117,7 +117,6 @@ public class ScriptByteSwapper {
             for(File f : fileList) {
                 try {
                     byte[] fileBytes = Files.readAllBytes(f.toPath());
-                    ByteBuffer.wrap(fileBytes);
                     int length = fileBytes.length;
 
                     ByteArrayOutputStream out = new ByteArrayOutputStream();

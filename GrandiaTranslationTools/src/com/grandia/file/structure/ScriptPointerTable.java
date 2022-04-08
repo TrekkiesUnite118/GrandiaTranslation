@@ -7,6 +7,8 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 /**
  * 
  * ScriptPointerTable Class
@@ -29,10 +31,29 @@ public class ScriptPointerTable {
         return pointerTable.get(key);
     }
     
+    @JsonIgnore
     public int getSize() {
         return pointerTable.size();
     }
     
+    /**
+     * The getter for pointerTable.
+     *
+     * @return the pointerTable.
+     */
+    public Map<Integer, PointerTableEntry> getPointerTable() {
+        return pointerTable;
+    }
+
+    /**
+     * The setter for pointerTable.
+     *
+     * @param pointerTable the pointerTable to set.
+     */
+    public void setPointerTable(Map<Integer, PointerTableEntry> pointerTable) {
+        this.pointerTable = pointerTable;
+    }
+
     public String toString() {
         StringBuilder sb = new StringBuilder();
         

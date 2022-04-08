@@ -36,10 +36,10 @@ public class VideoMuxer {
     private static final String HEX_END_FRAME_DATA = "0";
     
     //Brute force files.
-    private static String inputFile = "D:\\FMVDecompression\\DemuxTest\\MOV20.MOV";
-    private static String adxFile = "D:\\FMVDecompression\\DemuxTest\\MOV20.ADX";
-    private static String outputVid = "D:\\FMVDecompression\\DemuxTest\\Frames\\";
-    private static String output = "D:\\FMVDecompression\\MuxTest\\MOV20.MOV";
+    private static String inputFile = "D:\\FMVDecompression\\DemuxTest\\MOV13.MOV";
+    private static String adxFile = "D:\\FMVDecompression\\DemuxTest\\MOV13.ADX";
+    private static String outputVid = "D:\\FMVDecompression\\DemuxTest\\Frames13New\\";
+    private static String output = "D:\\FMVDecompression\\MuxTest\\MOV13.MOV";
     
     private final static char[] hexArray = "0123456789ABCDEF".toCharArray();
     

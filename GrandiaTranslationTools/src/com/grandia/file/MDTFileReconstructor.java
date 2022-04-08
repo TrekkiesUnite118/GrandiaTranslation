@@ -104,10 +104,10 @@ public class MDTFileReconstructor {
             FileUtils.populateFileMap(preScriptFiles, inputFilePath, ".PRESCRIPT");
             
             Map<String, File> scriptHeaderFiles = new HashMap<>();
-            FileUtils.populateFileMap(scriptHeaderFiles, inputFilePath, ".SCRIPTHEADER");
+            FileUtils.populateFileMap(scriptHeaderFiles, inputFilePath, ".OFS");
             
             Map<String, File> scriptFiles = new HashMap<>();
-            FileUtils.populateFileMap(scriptFiles, inputFilePath, ".SCRIPT");
+            FileUtils.populateFileMap(scriptFiles, inputFilePath, ".SCN");
             
             Map<String, File> gfxHFiles = new HashMap<>();
             FileUtils.populateFileMap(gfxHFiles, inputFilePath, ".GFXH");

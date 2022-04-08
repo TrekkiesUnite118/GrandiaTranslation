@@ -136,7 +136,7 @@ public class ScriptReconstructor {
                 }
                 
                 //Write out the new Script file.
-                FileUtils.writeToFile(outScript.toByteArray(), header.getName(), ".SCRIPTHEADER", ".SCRIPT", outputFilePath);
+                FileUtils.writeToFile(outScript.toByteArray(), header.getName(), ".OFS", ".SCN", outputFilePath);
                 
             } catch (IOException e) {
                 log.log(Level.SEVERE, "Caught IOException attempting to read bytes.", e);
