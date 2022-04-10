@@ -37,6 +37,8 @@ public class SHOPFileEditor {
     private static String HEX_MATCH_PATTERN_C = "060C";
     
     private static int MEM_OFFSET_START = 101392384;
+
+    private static int DIGITAL_MUSEUM_OFFSET = 44;
     
     //8x16 offsets
     private static int x16_BUY_OFFSET = 58896;
@@ -123,7 +125,7 @@ public class SHOPFileEditor {
     private static String x16_YOU_HAVE_NO_MANA_EGGS_VALUE;
     private static String x16_YOU_HAVE_NO_ITEMS_TO_GET_VALUE;
     private static String x16_WAS_LEARNED_VALUE;
-    
+        
     //8x8 values
     private static String TRADE_VALUE_VALUE;
     private static String MANA_EGGS_VALUE;
@@ -166,6 +168,8 @@ public class SHOPFileEditor {
     private Map<String, byte[]> fieldToValueMap;
     private Map<Integer, Integer> fileOffsetToMemOffsetValuesMap;
     private static Properties properties;
+
+    private boolean isDigitalMuseum = false;
     
     public SHOPFileEditor inputFilePath(String inputFilePath) {
         this.inputFilePath = inputFilePath;
@@ -174,6 +178,11 @@ public class SHOPFileEditor {
     
     public SHOPFileEditor outputFilePath(String outputFilePath) {
         this.outputFilePath = outputFilePath;
+        return this;
+    }
+    
+    public SHOPFileEditor isDigitalMuseum(boolean isDigitalMuseum) {
+        this.isDigitalMuseum = isDigitalMuseum;
         return this;
     }
     
@@ -337,7 +346,6 @@ public class SHOPFileEditor {
         fieldToOffsetMap.put("8x16 YOU HAVE NO ITEMS TO GET", x16_YOU_HAVE_NO_ITEMS_TO_GET_OFFSET);
         fieldToOffsetMap.put("8x16 WAS LEARNED", x16_WAS_LEARNED_OFFSET);
         
-        
         //8x8 offsets
         fieldToOffsetMap.put("TRADE_VALUE", TRADE_VALUE_OFFSET);
         fieldToOffsetMap.put("MANA EGGS", MANA_EGGS_OFFSET);
@@ -368,7 +376,14 @@ public class SHOPFileEditor {
         fieldToOffsetMap.put("FOREST", FOREST_OFFSET);
         fieldToOffsetMap.put("EXPLOSION", EXPLOSION_OFFSET);
         
-        fieldToOffsetMap.put("NAMES", NAMES_STRING_OFFSET  );
+        fieldToOffsetMap.put("NAMES", NAMES_STRING_OFFSET);
+        
+        if(isDigitalMuseum) {
+            for(String key : fieldToOffsetMap.keySet()) {
+                fieldToOffsetMap.put(key, fieldToOffsetMap.get(key) + DIGITAL_MUSEUM_OFFSET);
+            }
+        }
+        
     }
     
     private void populateFieldToNewValueMap() {

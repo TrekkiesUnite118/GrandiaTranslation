@@ -10,6 +10,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -127,6 +128,10 @@ public class GrandiaCMDMNFileEditor {
         label_1.setBounds(20, 84, 105, 22);
         frame.getContentPane().add(label_1);
         
+        JCheckBox digitalMuseumChkBox = new JCheckBox("Digital Museum");
+        digitalMuseumChkBox.setBounds(20, 112, 152, 23);
+        frame.getContentPane().add(digitalMuseumChkBox);
+        
         JButton btnInitialize = new JButton("Initialize");
         btnInitialize.setFont(new Font("Arial", Font.BOLD, 16));
         btnInitialize.setBounds(464, 55, 169, 51);
@@ -140,7 +145,8 @@ public class GrandiaCMDMNFileEditor {
                 System.out.println("Attempting to parse files...");
                 btnInitialize.setEnabled(false);
                 editor.inputFilePath(parseInputFileDirField.getText())
-                .outputFilePath(parseOutputFileDirField.getText() + "\\");
+                .outputFilePath(parseOutputFileDirField.getText() + "\\")
+                .isDigitalMuseum(digitalMuseumChkBox.isSelected());
                 editor.init();
                 btnInitialize.setEnabled(true);
             }

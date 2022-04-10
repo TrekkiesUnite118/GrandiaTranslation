@@ -27,6 +27,8 @@ public class CNFIGFileEditor {
     private static String HEX_MATCH_PATTERN_C = "060C";
     
     private static int MEM_OFFSET_START = 101392384;
+    private static int DIGITAL_MUSEUM_OFFSET = 44;
+    
     private static int ACTION_BUTTON_STRING_OFFSET = 39088;
     private static int CAMERA_STRING_OFFSET = 39097;
     private static int SOUND_STRING_OFFSET = 39109;
@@ -62,6 +64,7 @@ public class CNFIGFileEditor {
     private Map<Integer, String> orderToFieldNameMap;
     private Map<String, String> fieldToNewValueMap;
     private static Properties properties;
+    private boolean isDigitalMuseum = false;
     
     public CNFIGFileEditor inputFilePath(String inputFilePath) {
         this.inputFilePath = inputFilePath;
@@ -70,6 +73,11 @@ public class CNFIGFileEditor {
     
     public CNFIGFileEditor outputFilePath(String outputFilePath) {
         this.outputFilePath = outputFilePath;
+        return this;
+    }
+    
+    public CNFIGFileEditor isDigitalMuseum(boolean isDigitalMuseum) {
+        this.isDigitalMuseum = isDigitalMuseum;
         return this;
     }
     
@@ -181,7 +189,12 @@ public class CNFIGFileEditor {
         fieldToOffsetMap.put("STEREO", STEREO_STRING_OFFSET);
         fieldToOffsetMap.put("/", SLASH_OFFSET);
         fieldToOffsetMap.put("OPTIONS", OPTIONS_STRING_OFFSET);
-      
+        
+        if(isDigitalMuseum) {
+            for(String key : fieldToOffsetMap.keySet()) {
+                fieldToOffsetMap.put(key, fieldToOffsetMap.get(key) + DIGITAL_MUSEUM_OFFSET);
+            }
+        }
     } 
     
     /**

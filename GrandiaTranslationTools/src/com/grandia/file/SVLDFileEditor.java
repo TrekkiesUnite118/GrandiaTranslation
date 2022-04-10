@@ -64,6 +64,8 @@ public class SVLDFileEditor {
     private static int OVERWRITE_SLASH_STRING_OFFSET = 45587;
     private static int OVERWRITE_NO_STRING_OFFSET = 45590;
     private static int NAMES_STRING_OFFSET = 46824;
+    private static int DIGITAL_MUSEUM_OFFSET = 12;
+    private boolean isDigitalMuseum = false;
     
     private static String TIME_STRING;
     private static String LOAD_STRING;
@@ -120,6 +122,16 @@ public class SVLDFileEditor {
      */
     public SVLDFileEditor outputFilePath(String outputFilePath) {
         this.outputFilePath = outputFilePath;
+        return this;
+    }
+    
+    /**
+     * 
+     * @param isDigitalMuseum
+     * @return
+     */
+    public SVLDFileEditor isDigitalMuseum(boolean isDigitalMuseum) {
+        this.isDigitalMuseum = isDigitalMuseum;
         return this;
     }
     
@@ -272,6 +284,12 @@ public class SVLDFileEditor {
         fieldToOffsetMap.put("OVERWRITE /", OVERWRITE_SLASH_STRING_OFFSET);
         fieldToOffsetMap.put("OVERWRITE NO", OVERWRITE_NO_STRING_OFFSET);
         fieldToOffsetMap.put("NAMES", NAMES_STRING_OFFSET);
+        
+        if(isDigitalMuseum) {
+            for(String key : fieldToOffsetMap.keySet()) {
+                fieldToOffsetMap.put(key, fieldToOffsetMap.get(key) - DIGITAL_MUSEUM_OFFSET);
+            }
+        }
     }
     
     private void populateFieldToNewValueMap() {

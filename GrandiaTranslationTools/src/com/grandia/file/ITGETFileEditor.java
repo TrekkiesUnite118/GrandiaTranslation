@@ -27,6 +27,7 @@ public class ITGETFileEditor {
     private static String HEX_MATCH_PATTERN_C = "060C";
     
     private static int MEM_OFFSET_START = 101392384;
+    private static int DIGITAL_MUSEUM_OFFSET = 44;
     
     //8x8 offsets
     private static int ATK_OFFSET = 53076;
@@ -95,9 +96,15 @@ public class ITGETFileEditor {
     private Map<Integer, Integer> fileOffsetToMemOffsetValuesMap;
     private static Properties properties;
     private Map<Integer, String> orderToFieldNameMap;
+    private boolean isDigitalMuseum = false;
     
     public ITGETFileEditor inputFilePath(String inputFilePath) {
         this.inputFilePath = inputFilePath;
+        return this;
+    }
+    
+    public ITGETFileEditor isDigitalMuseum(boolean isDigitalMuseum) {
+        this.isDigitalMuseum = isDigitalMuseum;
         return this;
     }
     
@@ -239,6 +246,12 @@ public class ITGETFileEditor {
         fieldToOffsetMap.put("SHOES", SHOES_OFFSET);
         fieldToOffsetMap.put("JEWELRY", JEWELRY_OFFSET);
         fieldToOffsetMap.put("NAMES", NAMES_STRING_OFFSET  );
+        
+        if(isDigitalMuseum) {
+            for(String key : fieldToOffsetMap.keySet()) {
+                fieldToOffsetMap.put(key, fieldToOffsetMap.get(key) + DIGITAL_MUSEUM_OFFSET);
+            }
+        }
     }
     
     private void populateFieldToNewValueMap() {

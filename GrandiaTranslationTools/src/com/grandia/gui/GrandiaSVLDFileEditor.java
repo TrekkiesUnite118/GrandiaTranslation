@@ -21,6 +21,7 @@ import javax.swing.JButton;
 import javax.swing.JFileChooser;
 
 import java.awt.Choice;
+import javax.swing.JCheckBox;
 
 public class GrandiaSVLDFileEditor {
 
@@ -135,6 +136,12 @@ public class GrandiaSVLDFileEditor {
         btnInitialize.setBounds(464, 55, 169, 51);
         frame.getContentPane().add(btnInitialize);
         
+
+        JCheckBox digitalMuseumChkBox = new JCheckBox("Digital Museum");
+        digitalMuseumChkBox.setBounds(20, 112, 152, 23);
+        frame.getContentPane().add(digitalMuseumChkBox);
+        
+        
         SVLDFileEditor editor = new SVLDFileEditor();
                
         
@@ -143,7 +150,8 @@ public class GrandiaSVLDFileEditor {
                 System.out.println("Attempting to parse files...");
                 btnInitialize.setEnabled(false);
                 editor.inputFilePath(parseInputFileDirField.getText())
-                .outputFilePath(parseOutputFileDirField.getText() + "\\");
+                .outputFilePath(parseOutputFileDirField.getText() + "\\")
+                .isDigitalMuseum(digitalMuseumChkBox.isSelected());
                 editor.init();
                 btnInitialize.setEnabled(true);
             }
@@ -210,7 +218,6 @@ public class GrandiaSVLDFileEditor {
         btnAutoReplace.setFont(new Font("Arial", Font.BOLD, 16));
         btnAutoReplace.setBounds(10, 233, 276, 51);
         frame.getContentPane().add(btnAutoReplace);
-        
         btnAutoReplace.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 System.out.println("Attempting to auto replace values...");
@@ -224,6 +231,7 @@ public class GrandiaSVLDFileEditor {
         save.setFont(new Font("Arial", Font.BOLD, 16));
         save.setBounds(357, 233, 276, 51);
         frame.getContentPane().add(save);
+        
         
         save.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {

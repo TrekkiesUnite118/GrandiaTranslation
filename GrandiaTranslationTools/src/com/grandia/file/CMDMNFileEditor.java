@@ -28,6 +28,8 @@ public class CMDMNFileEditor {
     
     private static int MEM_OFFSET_START = 101392384;
     
+    private static int DIGITAL_MUSEUM_OFFSET = 44;
+    
     //8x16 offsets
     private static int x16_ITEMS_OFFSET = 90164;
     private static int x16_EQUIP_OFFSET = 90169;
@@ -173,6 +175,8 @@ public class CMDMNFileEditor {
     private Map<Integer, Integer> fileOffsetToMemOffsetValuesMap;
     private static Properties properties;
     
+    private boolean isDigitalMuseum = false;
+    
     public CMDMNFileEditor inputFilePath(String inputFilePath) {
         this.inputFilePath = inputFilePath;
         return this;
@@ -180,6 +184,11 @@ public class CMDMNFileEditor {
     
     public CMDMNFileEditor outputFilePath(String outputFilePath) {
         this.outputFilePath = outputFilePath;
+        return this;
+    }
+    
+    public CMDMNFileEditor isDigitalMuseum(boolean isDigitalMuseum) {
+        this.isDigitalMuseum = isDigitalMuseum;
         return this;
     }
     
@@ -354,6 +363,12 @@ public class CMDMNFileEditor {
         fieldToOffsetMap.put("SKILL2", SKILL_OFFSET_2 );
         fieldToOffsetMap.put("LV UP PARAM", LV_UP_PARAM_OFFSET  );
         fieldToOffsetMap.put("NAMES", NAMES_STRING_OFFSET  );
+        
+        if(isDigitalMuseum) {
+            for(String key : fieldToOffsetMap.keySet()) {
+                fieldToOffsetMap.put(key, fieldToOffsetMap.get(key) + DIGITAL_MUSEUM_OFFSET);
+            }
+        }
     }
     
     /**
